@@ -11,22 +11,20 @@ Usage:
 
 No dependencies beyond the Python stdlib are required.
 
-Modified from the upstream skill-creator (Apache-2.0): script-safe embedded JSON, and Host,
-Origin, content-type and per-run token checks on the server. See ../LOCAL-CHANGES.md.
+Modified from the upstream skill-creator (Apache-2.0): script-safe embedded JSON, Host, Origin,
+content-type and per-run token checks on the server, and a busy port falls back to a free one
+instead of stopping the process listening on it. See ../LOCAL-CHANGES.md.
 """
 
 import argparse
 import base64
+import errno
 import hmac
 import json
 import mimetypes
-import os
 import re
 import secrets
-import signal
-import subprocess
 import sys
-import time
 import webbrowser
 from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -314,26 +312,6 @@ def script_safe_json(value: object) -> str:
 # HTTP server (stdlib only, zero dependencies)
 # ---------------------------------------------------------------------------
 
-def _kill_port(port: int) -> None:
-    """Kill any process listening on the given port."""
-    try:
-        result = subprocess.run(
-            ["lsof", "-ti", f":{port}"],
-            capture_output=True, text=True, timeout=5,
-        )
-        for pid_str in result.stdout.strip().split("\n"):
-            if pid_str.strip():
-                try:
-                    os.kill(int(pid_str.strip()), signal.SIGTERM)
-                except (ProcessLookupError, ValueError):
-                    pass
-        if result.stdout.strip():
-            time.sleep(0.5)
-    except subprocess.TimeoutExpired:
-        pass
-    except FileNotFoundError:
-        print("Note: lsof not found, cannot check if port is in use", file=sys.stderr)
-
 class ReviewHandler(BaseHTTPRequestHandler):
     """Serves the review HTML and handles feedback saves.
 
@@ -522,18 +500,17 @@ def main() -> None:
         print(f"\n  Static viewer written to: {args.static}\n")
         sys.exit(0)
 
-    # Kill any existing process on the target port
     port = args.port
-    _kill_port(port)
     session_token = secrets.token_urlsafe(32)
     handler = partial(
         ReviewHandler, workspace, skill_name, feedback_path, previous, benchmark_path, session_token
     )
     try:
         server = HTTPServer(("127.0.0.1", port), handler)
-    except OSError:
-        # Port still in use after kill attempt — find a free one
+    except OSError as exc:
         server = HTTPServer(("127.0.0.1", 0), handler)
+        reason = "is in use" if exc.errno == errno.EADDRINUSE else f"is unavailable ({exc.strerror})"
+        print(f"Port {port} {reason}; using {server.server_address[1]}")
     # The port actually bound (differs from --port when that was 0 or taken).
     port = server.server_address[1]
 
