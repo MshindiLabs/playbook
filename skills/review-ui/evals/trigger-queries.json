@@ -1,0 +1,42 @@
+[
+  {
+    "query": "review the UI in this PR before I merge",
+    "should_trigger": true
+  },
+  {
+    "query": "does this component follow our design system?",
+    "should_trigger": true
+  },
+  {
+    "query": "check this form for keyboard access and focus states",
+    "should_trigger": true
+  },
+  {
+    "query": "are we using raw colours anywhere in this diff instead of tokens",
+    "should_trigger": true
+  },
+  {
+    "query": "does this animation respect reduced motion",
+    "should_trigger": true
+  },
+  {
+    "query": "redesign this page so it looks modern",
+    "should_trigger": false
+  },
+  {
+    "query": "review my changes before I push",
+    "should_trigger": false
+  },
+  {
+    "query": "is this endpoint protected against reading other users' data",
+    "should_trigger": false
+  },
+  {
+    "query": "write a unit test for this component",
+    "should_trigger": false
+  },
+  {
+    "query": "why is this page slow to load",
+    "should_trigger": false
+  }
+]
