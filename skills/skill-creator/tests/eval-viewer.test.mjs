@@ -5,6 +5,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
+import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -195,6 +196,54 @@ describe('the review server', () => {
     const saved = JSON.parse(readFileSync(join(ws, 'feedback.json'), 'utf8'));
     assert.equal(saved.reviews[0].feedback, 'ok');
   });
+
+  it('accepts a write that sends no Origin (the token alone proves it is its own page)', async () => {
+    const headers = { ...goodWrite() };
+    delete headers.Origin;
+    const res = await send({ port, method: 'POST', path: '/api/feedback', headers, body: feedback });
+    assert.equal(res.status, 200, res.text);
+  });
+
+  it('answers a non-ASCII token with 403, not a crash', async () => {
+    // node:http refuses such a header, so write the request by hand.
+    const head = [
+      'POST /api/feedback HTTP/1.1',
+      `Host: 127.0.0.1:${port}`,
+      'Content-Type: application/json',
+      `Content-Length: ${Buffer.byteLength(feedback)}`,
+      'X-Review-Token: tökén',
+      'Connection: close',
+      '',
+      '',
+    ].join('\r\n');
+    const reply = await new Promise((done, fail) => {
+      const socket = connect(port, '127.0.0.1', () => {
+        socket.write(Buffer.concat([Buffer.from(head, 'latin1'), Buffer.from(feedback)]));
+      });
+      let text = '';
+      socket.on('data', (chunk) => (text += chunk));
+      socket.on('end', () => done(text));
+      socket.on('error', fail);
+    });
+    assert.match(reply, /^HTTP\/1\.[01] 403 /);
+  });
+
+  it('refuses a body over the cap and a length that is not a number', async () => {
+    const big = await send({
+      port,
+      method: 'POST',
+      path: '/api/feedback',
+      headers: { ...goodWrite(), 'Content-Length': String(6 * 1024 * 1024) },
+    });
+    assert.equal(big.status, 413);
+    const odd = await send({
+      port,
+      method: 'POST',
+      path: '/api/feedback',
+      headers: { ...goodWrite(), 'Content-Length': 'abc' },
+    });
+    assert.equal(odd.status, 413);
+  });
 });
 
 /** The source of `function <name>(...) { ... }` in the viewer's script, braces matched. */
@@ -284,5 +333,57 @@ describe('viewer.html rendering', () => {
     };
     const els = render('renderBenchmark()', { benchmark });
     assertInert(els['benchmark-content'].innerHTML);
+  });
+
+  it('keeps only http(s) links from a spreadsheet, and asks SheetJS to sanitise them', () => {
+    const links = [
+      ['javascript:alert(1)', true],
+      [' data:text/html,x', true],
+      ['https://example.com', false],
+    ].map(([href, strip]) => ({
+      href,
+      strip,
+      removed: false,
+      getAttribute: () => href,
+      removeAttribute() {
+        this.removed = true;
+      },
+    }));
+    let options;
+    const context = vm.createContext({
+      atob: (s) => Buffer.from(s, 'base64').toString('binary'),
+      XLSX: {
+        read: () => ({ SheetNames: ['Sheet1'], Sheets: { Sheet1: {} } }),
+        utils: {
+          sheet_to_html: (_ws, opts) => {
+            options = opts;
+            return '<table></table>';
+          },
+        },
+      },
+      document: {
+        createElement: () => ({ style: {}, innerHTML: '', querySelectorAll: () => links }),
+      },
+      container: { appendChild() {}, textContent: '' },
+    });
+    vm.runInContext(`${extractFunction(source, 'renderXlsx')}\nrenderXlsx(container, 'AA==')`, context);
+    assert.equal(options.sanitizeLinks, true);
+    for (const link of links) assert.equal(link.removed, link.strip, link.href);
+  });
+
+  it('does not report a refused save as saved', async () => {
+    const status = { textContent: '' };
+    const context = vm.createContext({
+      EMBEDDED_DATA: { runs: [{ id: 'r1' }], session_token: 'stale' },
+      currentIndex: 0,
+      feedbackMap: {},
+      document: {
+        getElementById: (id) => (id === 'feedback' ? { value: 'looks good' } : status),
+      },
+      fetch: async () => ({ ok: false, status: 403 }),
+    });
+    vm.runInContext(`${extractFunction(source, 'saveCurrentFeedback')}\nsaveCurrentFeedback()`, context);
+    await new Promise((done) => setTimeout(done, 0));
+    assert.equal(status.textContent, 'Not saved: reload the page');
   });
 });

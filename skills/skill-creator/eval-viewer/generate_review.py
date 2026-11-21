@@ -433,7 +433,8 @@ class ReviewHandler(BaseHTTPRequestHandler):
                 self._refuse(403, "Unexpected Origin header")
                 return
             token = self.headers.get("X-Review-Token") or ""
-            if not hmac.compare_digest(token, self.session_token):
+            # Bytes: http.server decodes headers as latin-1, and compare_digest refuses non-ASCII str.
+            if not hmac.compare_digest(token.encode("latin-1"), self.session_token.encode()):
                 self._refuse(403, "Missing or wrong review token")
                 return
             content_type = (self.headers.get("Content-Type") or "").split(";")[0].strip()

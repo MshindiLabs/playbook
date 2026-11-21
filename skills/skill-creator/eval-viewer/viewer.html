@@ -846,9 +846,14 @@
             container.appendChild(sheetLabel);
           }
 
-          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false, sanitizeLinks: true });
           const wrapper = document.createElement("div");
           wrapper.innerHTML = htmlStr;
+          // A cell hyperlink is untrusted: keep only http(s) links, so a javascript: or data:
+          // target cannot run in this page.
+          for (const a of wrapper.querySelectorAll("a[href]")) {
+            if (!/^https?:/i.test((a.getAttribute("href") || "").trim())) a.removeAttribute("href");
+          }
           container.appendChild(wrapper);
         }
       } catch (err) {
@@ -1015,12 +1020,16 @@
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Review-Token": EMBEDDED_DATA.session_token || "" },
         body: JSON.stringify({ reviews, status: "in_progress" }),
-      }).then(() => {
+      }).then((resp) => {
+        // fetch resolves on 4xx: a refused write (a stale page after the viewer restarted, so its
+        // review token is no longer valid) must not read as saved.
+        if (!resp.ok) throw Object.assign(new Error("HTTP " + resp.status), { refused: true });
         document.getElementById("feedback-status").textContent = "Saved";
-      }).catch(() => {
+      }).catch((err) => {
         // Static mode or server unavailable — no-op on auto-save,
         // feedback will be downloaded on final submit
-        document.getElementById("feedback-status").textContent = "Will download on submit";
+        document.getElementById("feedback-status").textContent =
+          err && err.refused ? "Not saved: reload the page" : "Will download on submit";
       });
     }
 
@@ -1047,7 +1056,8 @@
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Review-Token": EMBEDDED_DATA.session_token || "" },
         body: payload,
-      }).then(() => {
+      }).then((resp) => {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
         document.getElementById("done-overlay").classList.add("visible");
       }).catch(() => {
         // Server not available (static mode) — download as file
