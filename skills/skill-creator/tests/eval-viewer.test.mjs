@@ -246,8 +246,11 @@ describe('the review server', () => {
   });
 });
 
-/** Start a separate process that listens on 127.0.0.1 and report the port it was given. */
-async function startHolder() {
+/**
+ * Start a separate process that listens on 127.0.0.1 and report the port it was given. The child
+ * goes into `stops` as soon as it exists, so a failed start cannot leave it running.
+ */
+async function startHolder(stops) {
   const child = spawn(
     process.execPath,
     [
@@ -256,6 +259,7 @@ async function startHolder() {
     ],
     { stdio: ['ignore', 'pipe', 'inherit'] },
   );
+  stops.push(child);
   const held = await new Promise((done, fail) => {
     child.stdout.once('data', (chunk) => done(Number(String(chunk).trim())));
     child.once('exit', (code) => fail(new Error(`holder exited with ${code}`)));
@@ -263,11 +267,16 @@ async function startHolder() {
   return { child, port: held };
 }
 
-/** Start the viewer on `port` and wait for its URL line. Resolves with the bound port and stdout. */
-async function startViewer(ws, port) {
+/**
+ * Start the viewer on `port` and wait for its URL line. Resolves with the bound port and stdout.
+ * The child goes into `stops` as soon as it exists, so a viewer that never prints its URL (the
+ * 10 s timeout below) is still killed by the caller's cleanup.
+ */
+async function startViewer(ws, port, stops) {
   const child = spawn('python3', ['-I', '-u', script, ws, '--port', String(port)], {
     env: { ...process.env, BROWSER: 'true' },
   });
+  stops.push(child);
   let out = '';
   const boundPort = await new Promise((done, fail) => {
     const timer = setTimeout(() => fail(new Error(`no URL line from the viewer: ${out}`)), 10_000);
@@ -319,10 +328,8 @@ describe('the review server when its port is taken', () => {
   });
 
   it('falls back to a free port and leaves the process holding the port alone', async () => {
-    const holder = await startHolder();
-    stops.push(holder.child);
-    const viewer = await startViewer(ws, holder.port);
-    stops.push(viewer.child);
+    const holder = await startHolder(stops);
+    const viewer = await startViewer(ws, holder.port, stops);
 
     assert.notEqual(viewer.port, holder.port);
     assert.ok(
@@ -338,11 +345,10 @@ describe('the review server when its port is taken', () => {
 
   it('binds the requested port, with no notice, when it is free', async () => {
     const wanted = await freePort();
-    const viewer = await startViewer(ws, wanted);
-    stops.push(viewer.child);
+    const viewer = await startViewer(ws, wanted, stops);
 
     assert.equal(viewer.port, wanted);
-    assert.ok(!viewer.stdout().includes('is in use'), viewer.stdout());
+    assert.ok(!viewer.stdout().includes(`Port ${wanted} `), viewer.stdout());
   });
 });
 
