@@ -91,8 +91,8 @@ Summary
 
 Severity:
 
-- **High:** a primary workflow with no keyboard path, an icon-only control with no accessible name, removed focus styles, motion that blocks input.
-- **Medium:** a raw colour or a dark-mode variant that hard-codes one, a hand-built copy of an existing primitive, motion with no reduced-motion handling, a missing loading, empty or error state.
+- **High:** a primary workflow with no keyboard path, an icon-only control with no accessible name, removed focus styles, motion that blocks input, a single-key shortcut that fires while the user types in an input.
+- **Medium:** a raw colour or a dark-mode variant that hard-codes one, a hand-built copy of an existing primitive, motion with no reduced-motion handling, a missing loading, empty or error state, a form that stays enabled while submitting, a dialog that does not take or return focus, a style that only works in one theme.
 - **Low:** an arbitrary spacing value, a repeated style that should be a token, a plain anchor for an internal route.
 
 If a finding depends on a design-system rule you could not confirm, report it as a question and say what you would need to see. Do not report components that follow the system you found, even when you would have designed them differently.

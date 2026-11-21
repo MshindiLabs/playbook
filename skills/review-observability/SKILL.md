@@ -6,8 +6,9 @@ description: >
   sensitive data, monitored scheduled jobs, and health endpoints. Use before
   merging a change to handlers, jobs or service calls. Trigger on "review the
   logging in this PR", "will we be able to trace this request", or "check our
-  error reporting and health checks". Not for a live incident or a secrets
-  scan; use the `triage-error` or `audit-secrets` skill.
+  error reporting and health checks". Not for a live incident, a secrets
+  scan or a general review; use the `triage-error`, `audit-secrets` or
+  `review-changes` skill.
 ---
 
 # review-observability
@@ -32,7 +33,7 @@ List the handlers, jobs, outgoing calls (HTTP, RPC, queue publishes), error hand
 
 Defaults, when no convention is found:
 
-- Every event is one structured line (JSON) on stdout, written by the project's logger, carrying at least: level, time, service, request id, the component that logged, and a message; plus user or organisation identifiers and the stack on errors, when known.
+- Every event is one structured line (JSON) on stdout, written by the project's logger. Each line carries enough to filter and correlate: severity, a timestamp, which service and component wrote it, the request id, and the message; errors add the stack, and the acting user or tenant is included when known.
 - Report a bare `console.log`, `print` or string-built message in application code, a multi-line free-text log, and a log of a whole object or request body.
 - Log an event once. Report log-and-rethrow at every layer, which prints the same failure several times.
 - Levels mean something: errors for failures, warnings for recoverable problems, info for events worth keeping. A pretty, human-readable format is for local development only.
@@ -49,7 +50,7 @@ Defaults, when no convention is found:
 - An error already reported by the service that threw it is not reported again by the caller that relayed it.
 - Reported events carry the service name and the request id.
 - Report an empty `catch`, a `catch` that only logs and continues where the caller needs to know, and a promise that is not awaited or has no rejection handler.
-- If no tracker is configured, the code still works: a missing key turns reporting off and does not crash startup.
+- The tracker is configured to collect nothing by default (no request bodies, cookies or personal data) and a missing key turns reporting off without crashing startup.
 
 ## Step 6 — Sensitive data
 
@@ -66,8 +67,8 @@ Defaults, when no convention is found:
 
 - Each service exposes a health endpoint that needs no authentication.
 - It returns success only when the service and the dependencies it needs (database, queue, downstream services) answered, and a failure status otherwise. Report an endpoint that always returns success, one that returns a failure status with no body, and one that reports "healthy" without checking anything.
-- The body says up, down or unknown. The reason goes to the log, not to the caller. Report internals in the response (hostnames, stack traces, connection strings).
-- Passing health polls are not access-logged.
+- The body is minimal: it says whether the service is healthy and nothing about why. The reason goes to the log, not to the caller. Report internals in the response (hostnames, stack traces, connection strings).
+- Health polls that pass are kept out of the access log.
 
 ## Step 9 — Hand off what is not observability review
 
@@ -104,8 +105,8 @@ Summary
 
 Severity:
 
-- **High:** sensitive data in a log or event, an outgoing call that drops the request id, client errors flooding the tracker, a health endpoint that always passes.
-- **Medium:** an unstructured log line in application code, a swallowed error, a scheduled job with no failure alert, a failure status with no body.
-- **Low:** log-and-rethrow duplicates, a wrong log level, a missing field that is nice to have.
+- **High:** sensitive data in a log or event, an outgoing call or a request-started job that drops the request id, client errors flooding the tracker, a server error that never reaches the tracker, a health endpoint that always passes, internals (hostnames, stack traces, connection strings) in a health response.
+- **Medium:** an unstructured log line in application code, a swallowed error, a scheduled job with no failure alert, a failure status with no body, a health endpoint behind authentication, a missing tracker key that crashes startup.
+- **Low:** log-and-rethrow duplicates, an error reported twice (relayed and original), a wrong log level, a missing field that is nice to have.
 
 If a finding depends on a convention you could not confirm, report it as a question and say what you would need to see. Do not report code that follows the convention you found, even when you would have chosen differently.
