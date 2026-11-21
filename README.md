@@ -231,7 +231,7 @@ right place instead of the first match.
 | `unslop`                             | Cuts AI tells from prose using numbered patterns, keeping the meaning and tone.                                                                                |
 | `deslop`                             | Removes AI-generated code slop from a diff: needless comments, defensive checks and style drift.                                                               |
 | `no-comments`                        | Deletes comments, fixes the code that needed them, and offers to encode claimed constraints as types, tests or lint.                                           |
-| `technical-writing`                  | A layered standard for docs, RFCs, READMEs, PR descriptions and commit messages.                                                                               |
+| `technical-writing`                  | A layered writing standard for docs, RFCs and READMEs, and for the prose of other documents.                                                                   |
 | `architect`                          | Sketches types, signatures and module structure before code, then stays in the loop while the work is filled in.                                               |
 | `blast-radius`                       | Finds what a change could break elsewhere and proves the one fact it is safe because of by running real code.                                                  |
 | `correct`                            | Makes a mistake agents keep repeating impossible, trying architecture, then types, then lint, then tests, then docs.                                           |
