@@ -48,3 +48,19 @@ resolve.
 | `skills/architect/references/deep-modules.md` | `skills/engineering/codebase-design/SKILL.md` | Folded into `architect` as a reference, not a skill; frontmatter removed; the design-it-twice pointer dropped because it needs parallel sub-agents. |
 | `skills/architect/references/deepening.md` | `skills/engineering/codebase-design/DEEPENING.md` | Link retargeted to `deep-modules.md`. |
 | `skills/technical-writing/references/writing-for-agents.md` | `skills/productivity/writing-for-agents/SKILL.md` | Folded into `technical-writing` as a reference, not a skill; frontmatter removed; the skill-mechanics file dropped because it describes one agent's frontmatter, with its split-by-invocation rule kept inline. |
+
+## From nestjs/agent-skills
+
+Four reference files adapt the NestJS agent skills from
+[nestjs/agent-skills](https://github.com/nestjs/agent-skills) at commit
+`7f05f492c42b30bb03b721caa07b2642cdf29deb`, MIT licensed, Copyright (c) 2026-present Kamil
+Mysliwiec. Each sits beside a `LICENSE-nestjs.txt`. They are adapted into review checks: the upstream skills teach how to build with Nest 12 and its newer first-party packages,
+while these list what a reviewer should flag in any NestJS version, with a severity for each.
+
+| Local | Upstream | Changes |
+| --- | --- | --- |
+| `skills/review-api/references/nestjs.md` | `skills/nestjs-feature/SKILL.md`, `skills/nestjs/SKILL.md` | Rewritten as review checks with severities; validation, status codes, filters, routing and serialization only; package-specific setup dropped. |
+| `skills/review-auth/references/nestjs.md` | `skills/nestjs-auth/SKILL.md`, `skills/nestjs/SKILL.md`, `skills/nestjs-feature/SKILL.md` | Rewritten as review checks, independent of the auth package; adds the look-up that throws its own 404 and stored hashes at different costs. |
+| `skills/check-query-safety/references/nestjs.md` | `skills/nestjs-data/SKILL.md` | Rewritten as review checks across TypeORM, Prisma, Drizzle and raw drivers; paging defers to the project's documented envelope. |
+| `skills/review-observability/references/nestjs.md` | `skills/nestjs-production/SKILL.md` | Rewritten as review checks; the hosted observability product and OpenAPI setup dropped. |
+
