@@ -10,14 +10,19 @@ Usage:
     python generate_review.py <workspace-path> --previous-feedback /path/to/old/feedback.json
 
 No dependencies beyond the Python stdlib are required.
+
+Modified from the upstream skill-creator (Apache-2.0): script-safe embedded JSON, and Host,
+Origin, content-type and per-run token checks on the server. See ../LOCAL-CHANGES.md.
 """
 
 import argparse
 import base64
+import hmac
 import json
 import mimetypes
 import os
 import re
+import secrets
 import signal
 import subprocess
 import sys
@@ -26,6 +31,9 @@ import webbrowser
 from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
+
+# Largest feedback body the server accepts (feedback is a few kilobytes of review text)
+MAX_FEEDBACK_BYTES = 5 * 1024 * 1024
 
 # Files to exclude from output listings
 METADATA_FILES = {"transcript.md", "user_notes.md", "metrics.json"}
@@ -252,6 +260,7 @@ def generate_html(
     skill_name: str,
     previous: dict[str, dict] | None = None,
     benchmark: dict | None = None,
+    session_token: str | None = None,
 ) -> str:
     """Generate the complete standalone HTML page with embedded data."""
     template_path = Path(__file__).parent / "viewer.html"
@@ -276,9 +285,29 @@ def generate_html(
     if benchmark:
         embedded["benchmark"] = benchmark
 
-    data_json = json.dumps(embedded)
+    if session_token:
+        embedded["session_token"] = session_token
 
-    return template.replace("/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {data_json};")
+    return template.replace(
+        "/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {script_safe_json(embedded)};"
+    )
+
+
+def script_safe_json(value: object) -> str:
+    """JSON that is safe inside a <script> element.
+
+    Eval outputs are untrusted text: an output containing `</script>` would otherwise end the
+    script element and run whatever follows. Escaping `<`, `>` and `&` (and the two line
+    separators JavaScript treats as newlines) keeps the JSON identical once parsed.
+    """
+    return (
+        json.dumps(value)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+        .replace(" ", "\\u2028")
+        .replace(" ", "\\u2029")
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +348,7 @@ class ReviewHandler(BaseHTTPRequestHandler):
         feedback_path: Path,
         previous: dict[str, dict],
         benchmark_path: Path | None,
+        session_token: str,
         *args,
         **kwargs,
     ):
@@ -327,9 +357,43 @@ class ReviewHandler(BaseHTTPRequestHandler):
         self.feedback_path = feedback_path
         self.previous = previous
         self.benchmark_path = benchmark_path
+        self.session_token = session_token
         super().__init__(*args, **kwargs)
 
+    # Local-only guards. The server listens on loopback, but a page open in the browser can still
+    # send it requests (CSRF), and a hostile DNS name that re-resolves to 127.0.0.1 can read it
+    # (DNS rebinding). Every request must name this server in Host; a write must also come from
+    # this server's own page (Origin, when sent), carry JSON, and carry the per-run token that is
+    # embedded only in the page this server serves.
+
+    def _allowed_hosts(self) -> set[str]:
+        port = self.server.server_address[1]
+        return {f"127.0.0.1:{port}", f"localhost:{port}"}
+
+    def _host_ok(self) -> bool:
+        return (self.headers.get("Host") or "") in self._allowed_hosts()
+
+    def _origin_ok(self) -> bool:
+        origin = self.headers.get("Origin")
+        return origin is None or origin in {f"http://{h}" for h in self._allowed_hosts()}
+
+    def _refuse(self, code: int, message: str) -> None:
+        body = json.dumps({"error": message}).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def end_headers(self) -> None:
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def do_GET(self) -> None:
+        if not self._host_ok():
+            self._refuse(403, "Unexpected Host header")
+            return
         if self.path == "/" or self.path == "/index.html":
             # Regenerate HTML on each request (re-scans workspace for new outputs)
             runs = find_runs(self.workspace)
@@ -339,7 +403,9 @@ class ReviewHandler(BaseHTTPRequestHandler):
                     benchmark = json.loads(self.benchmark_path.read_text())
                 except (json.JSONDecodeError, OSError):
                     pass
-            html = generate_html(runs, self.skill_name, self.previous, benchmark)
+            html = generate_html(
+                runs, self.skill_name, self.previous, benchmark, self.session_token
+            )
             content = html.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -359,8 +425,29 @@ class ReviewHandler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self) -> None:
+        if not self._host_ok():
+            self._refuse(403, "Unexpected Host header")
+            return
         if self.path == "/api/feedback":
-            length = int(self.headers.get("Content-Length", 0))
+            if not self._origin_ok():
+                self._refuse(403, "Unexpected Origin header")
+                return
+            token = self.headers.get("X-Review-Token") or ""
+            # Bytes: http.server decodes headers as latin-1, and compare_digest refuses non-ASCII str.
+            if not hmac.compare_digest(token.encode("latin-1"), self.session_token.encode()):
+                self._refuse(403, "Missing or wrong review token")
+                return
+            content_type = (self.headers.get("Content-Type") or "").split(";")[0].strip()
+            if content_type != "application/json":
+                self._refuse(415, "Expected Content-Type: application/json")
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+            except ValueError:
+                length = -1
+            if length < 0 or length > MAX_FEEDBACK_BYTES:
+                self._refuse(413, "Feedback body too large")
+                return
             body = self.rfile.read(length)
             try:
                 data = json.loads(body)
@@ -438,13 +525,17 @@ def main() -> None:
     # Kill any existing process on the target port
     port = args.port
     _kill_port(port)
-    handler = partial(ReviewHandler, workspace, skill_name, feedback_path, previous, benchmark_path)
+    session_token = secrets.token_urlsafe(32)
+    handler = partial(
+        ReviewHandler, workspace, skill_name, feedback_path, previous, benchmark_path, session_token
+    )
     try:
         server = HTTPServer(("127.0.0.1", port), handler)
     except OSError:
         # Port still in use after kill attempt — find a free one
         server = HTTPServer(("127.0.0.1", 0), handler)
-        port = server.server_address[1]
+    # The port actually bound (differs from --port when that was 0 or taken).
+    port = server.server_address[1]
 
     url = f"http://localhost:{port}"
     print(f"\n  Eval Viewer")

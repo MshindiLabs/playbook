@@ -1,0 +1,16 @@
+# Local changes to skill-creator
+
+`skill-creator` is vendored from upstream under Apache-2.0 (see `LICENSE.txt`). Everything else in
+this directory is upstream as imported. These files differ, and each carries a notice saying so:
+
+| File                             | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eval-viewer/generate_review.py` | The embedded data is script-safe JSON (`<`, `>`, `&` and the line separators escaped), so an eval output containing `</script>` cannot end the script element. The review server refuses any request whose `Host` is not `127.0.0.1:<port>` or `localhost:<port>` (DNS rebinding). A feedback write must also send a matching `Origin` when one is present, `Content-Type: application/json`, a body under 5 MB, and the random per-run token embedded in the served page (CSRF). Responses send `nosniff` and `no-store`. The printed URL uses the port actually bound. |
+| `eval-viewer/viewer.html`        | `escapeHtml` escapes quotes as well, and every value interpolated into an HTML string goes through it (benchmark metadata, deltas, configuration labels, run numbers, grading counts). Feedback saves send the token in `X-Review-Token`, and a refused save (a page left open across a viewer restart holds a stale token) shows "Not saved: reload the page" or falls back to the download, instead of "Saved". Spreadsheet outputs render with SheetJS `sanitizeLinks`, and any cell link that is not `http(s)` loses its `href`.                                                                                                                                                                                                                                                                                                                                |
+
+`tests/eval-viewer.test.mjs` covers each change and runs with `pnpm --filter playbook test` (needs
+`python3`). When you pull a new upstream version, re-apply these changes and keep the test green.
+
+Not changed, and worth knowing: on start the server stops whatever process is listening on its
+port (`--port`, default 3117) before binding, and the page loads SheetJS from a CDN, with a
+subresource-integrity hash, to render `.xlsx` outputs.
