@@ -1,6 +1,6 @@
 # playbook
 
-Mshindi Labs Playbook: 56 agent skills for AI coding assistants — code review,
+Mshindi Labs Playbook: 60 agent skills for AI coding assistants — code review,
 debugging, git and release workflow, testing, codebase orientation, and project setup.
 
 A skill is a packaged set of instructions your agent loads when the task matches.
@@ -209,11 +209,15 @@ right place instead of the first match.
 
 ### Planning and scaffolding
 
-| Skill              | What it does                                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------------------------- |
-| `plan-change`      | Implementation-ready plan before any code: scope, options, recommendation, phases, risks, verification. |
-| `scaffold-feature` | Skeleton files for a new feature that match the project's existing conventions.                         |
-| `draft-adr`        | Captures a technical decision as a durable ADR — context, options considered, decision, consequences.   |
+| Skill               | What it does                                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `plan-change`       | Implementation-ready plan before any code: scope, options, recommendation, phases, risks, verification.                       |
+| `scaffold-feature`  | Skeleton files for a new feature that match the project's existing conventions.                                               |
+| `draft-adr`         | Captures a technical decision as a durable ADR — context, options considered, decision, consequences.                         |
+| `grilling`          | Questions a plan in rounds, each question with a recommended answer, until nothing is silently assumed. Runs only when asked. |
+| `break-into-issues` | Splits a plan into small end-to-end issues with blocking edges, then publishes them once you approve. Runs only when asked.   |
+| `domain-modeling`   | Builds a project glossary while designing: challenges fuzzy terms and records each one as it is settled.                      |
+| `handoff`           | Writes a handoff document so a fresh session can continue the work. Runs only when asked.                                     |
 
 ### Code quality
 
@@ -312,6 +316,10 @@ Cursor's `cursor-team-kit` and `thermos` plugins, all MIT, from
 [cursor/plugins](https://github.com/cursor/plugins). They are rewritten so any agent that reads
 `SKILL.md` files can follow them. Each keeps its own `LICENSE.txt`. See
 [`skills/UPSTREAM.md`](skills/UPSTREAM.md) for what came from where and what changed.
+
+`grilling`, `break-into-issues`, `domain-modeling` and `handoff` are adapted from
+[mattpocock/skills](https://github.com/mattpocock/skills) by Matt Pocock, MIT, as are the
+deep-module reference in `architect` and the writing-for-agents reference in `technical-writing`.
 
 ---
 

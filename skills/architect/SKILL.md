@@ -10,3 +10,5 @@ metadata:
 # Architect
 
 Before writing code, trace every system the change touches, then sketch two different shapes for it (types, signatures, module boundaries) and pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. Redesign instead of patching if workarounds repeat.
+
+When the shape in question is a module boundary, use the vocabulary in [deep-modules.md](references/deep-modules.md): a lot of behaviour behind a small interface, placed at a seam where something really varies.

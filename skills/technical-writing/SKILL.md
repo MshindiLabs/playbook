@@ -69,5 +69,6 @@ One document, one mode. Don't mix modes. Split and link instead.
 
 - Apply the `unslop` skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
 - PR descriptions and commit messages are writing too. For their format, the `commit-changes` skill and the `create-pr` skill own it when they are installed. Apply only the sentence-level rules here. Every layer except Diátaxis applies to them. A PR body is a briefing that a reviewer can read in under a minute. Do not paste agent logs, SHA lists, or metric tables. Link them.
+- A document an agent reads (a skill, an `AGENTS.md` or `CLAUDE.md`, a file one of them points to) follows [writing-for-agents.md](references/writing-for-agents.md) as well.
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
 - Match the repo's indentation in code snippets. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.
