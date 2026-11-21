@@ -9,6 +9,7 @@
   "skills": ["./skills/"],
   "agents": [
     "./agents/builder.md",
+    "./agents/comment-reviewer.md",
     "./agents/migration-reviewer.md",
     "./agents/reviewer.md",
     "./agents/security-reviewer.md"
