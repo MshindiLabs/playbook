@@ -54,8 +54,7 @@ resolve.
 Four reference files adapt the NestJS agent skills from
 [nestjs/agent-skills](https://github.com/nestjs/agent-skills) at commit
 `7f05f492c42b30bb03b721caa07b2642cdf29deb`, MIT licensed, Copyright (c) 2026-present Kamil
-Mysliwiec. Each sits beside a `LICENSE-nestjs.txt`. They are rewritten as review checks rather than
-copied: the upstream skills teach how to build with Nest 12 and its newer first-party packages,
+Mysliwiec. Each sits beside a `LICENSE-nestjs.txt`. They are adapted into review checks: the upstream skills teach how to build with Nest 12 and its newer first-party packages,
 while these list what a reviewer should flag in any NestJS version, with a severity for each.
 
 | Local | Upstream | Changes |

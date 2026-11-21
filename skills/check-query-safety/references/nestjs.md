@@ -8,16 +8,18 @@ wins.
 
 - **Read, then save the whole entity.** TypeORM's `save()` inserts the row if it has gone, so a
   PATCH that loaded a row just before a concurrent DELETE puts it back; an `upsert` does the same
-  in any ORM. Update with a conditional statement (`repo.update({ id, ownerId }, changes)`, a
-  Prisma `updateMany` with the owner in `where`, Drizzle `update().where(...).returning()`) and
-  treat no affected row as 404. High.
+  in any ORM. Update with a conditional statement and treat no affected row as 404:
+  `repo.update({ id, ownerId }, changes)` in TypeORM; Prisma `updateMany` with the owner in
+  `where`, or on Prisma 5 and later `update({ where: { id, ownerId } })`, which throws `P2025` when
+  nothing matches; Drizzle `update().where(...)`, with `.returning()` where the dialect has it (not
+  MySQL). High.
 - **Scope by owner in the query**, not after loading: `where: { id, ownerId }`. A row that is not
   the caller's is then simply not found. Hand a missing ownership check to the `review-auth`
   skill.
 - **Map constraint violations instead of pre-checking.** "Is the email taken? Then insert" lets two
   requests both pass. Insert and catch the unique violation (PostgreSQL `23505`, Prisma `P2002`,
-  SQLite `SQLITE_CONSTRAINT_UNIQUE`; Drizzle wraps the driver error, so walk `error.cause`) and
-  answer 409. Medium.
+  SQLite `SQLITE_CONSTRAINT_UNIQUE`; newer Drizzle versions wrap the driver error, so check
+  `error.cause` too) and answer 409. Medium.
 - **Check-then-write needs a constraint or a transaction.** "Count the admins, then demote one"
   races without one. Medium.
 - **Async drivers interleave between statements.** A synchronous SQLite driver in tests hides races

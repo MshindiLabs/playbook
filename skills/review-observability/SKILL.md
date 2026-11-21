@@ -25,7 +25,7 @@ Work out which rules apply, in this order, and keep a note of which source decid
 
 A change that follows a documented convention which differs from the defaults is correct. Do not report it.
 
-**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering configuration loading, scheduled and queued jobs, event listeners, shutdown and running behind a load balancer. A documented convention still wins over them.
+**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering configuration loading, scheduled and queued jobs, event listeners, health checks and shutdown. A documented convention still wins over them.
 
 ## Step 2 — Map what changed
 

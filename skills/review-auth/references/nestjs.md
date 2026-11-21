@@ -21,13 +21,13 @@ the newer first-party authentication packages alike; check which one the project
 
 ## Tokens and secrets
 
-- **HS256 keys need at least 32 bytes.** Never hash, pad or derive a longer key from a short secret
-  to satisfy a library: tokens are then signed with a different key from the one other services
-  verify with. Medium.
-- **Read roles and permissions from the database on each request**, not from token claims. Claims
-  outlive a role change or a deleted user, and a user-chosen role name in a claim is not proof of
-  anything. High when a decision rests on a claim.
-- **Refresh tokens rotate**, and a reused one revokes its family. Access tokens stay short-lived.
+- **HS256 keys should be at least 32 bytes** (RFC 7518, section 3.2). Some packages enforce it and
+  `@nestjs/jwt` does not. Never hash, pad or derive a longer key from a short secret to get there:
+  tokens are then signed with a different key from the one other services verify with. Medium.
+- **Roles and permissions in token claims.** High when the claim is something the user can choose
+  (a role name they can set), or the token is long-lived with no revocation; then the decision
+  should read the database on each request. A short-lived token whose claims the server issued is
+  a design choice: ask whether a role change or a deleted user must take effect before it expires.
 
 ## Guards
 
@@ -51,7 +51,9 @@ the newer first-party authentication packages alike; check which one the project
 - **CORS with credentials needs a list of origins.** `origin: true` reflects any origin, so every
   site can call the API as the signed-in user. High.
 - **Mass assignment.** Without `ValidationPipe({ whitelist: true })`, a body spread into an entity
-  can set `ownerId` or `role`. High.
+  can set `ownerId` or `role`. High. (The `review-api` skill hands this over rather than rating it.)
+- **A secret field in a response** (a password hash or a token on a returned row, often because
+  `@Exclude()` does nothing to a plain object). High.
 - **Request-scoped providers** spread to everything that injects them, and their lifecycle hooks
   never run. Per-request identity is usually better read from the request or an
   `AsyncLocalStorage` context. Low.

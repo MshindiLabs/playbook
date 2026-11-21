@@ -13,11 +13,12 @@ Apply these when the project uses NestJS (`@nestjs/core` in `package.json`), on 
   `@nestjs/mapped-types` (or `@nestjs/swagger`) adds `@IsOptional()` to every field, with the same
   effect, unless it is given `{ skipNullProperties: false }`. Medium.
 - **Nested objects and arrays are not validated** without `@ValidateNested()` and
-  `@Type(() => Child)` from class-transformer. Without `@Type()`, any value passes. Medium.
-- **The global `ValidationPipe` should strip or reject unknown fields** (`whitelist: true`, or
-  `forbidNonWhitelisted: true` to answer 400). Without it, a field the DTO never declared
-  (`ownerId`, `role`) reaches a body that is spread into an update. That is also an authorization
-  problem: hand it to the `review-auth` skill. High when the body reaches a write.
+  `@Type(() => Child)` from class-transformer. Without `@Type()`, any object passes unvalidated
+  (Nest's `ValidationPipe` sets `forbidUnknownValues: false`). Medium.
+- **The global `ValidationPipe` should strip unknown fields** (`whitelist: true`, plus
+  `forbidNonWhitelisted: true` to answer 400 instead; the second does nothing without the first).
+  Missing, it is a shape finding here, Medium; a body spread into a write that can then set
+  `ownerId` or `role` is hand-off material for the `review-auth` skill.
 - **Schema validation (Zod, Valibot, ArkType).** `.optional()` and `.partial()` already reject
   `null`. A boolean from a query string needs a string-to-boolean parser: `z.coerce.boolean()`
   turns `"false"` into `true`. Medium.
@@ -33,7 +34,8 @@ Apply these when the project uses NestJS (`@nestjs/core` in `package.json`), on 
   `@HttpCode(200)` or the code the contract names; a DELETE with no body, `@HttpCode(204)`. Low,
   medium if a client depends on the code.
 - **Errors are Nest exceptions** (`NotFoundException`, `ConflictException`, ...). Anything else
-  thrown becomes a 500. Medium.
+  thrown becomes a 500, unless an exception filter maps it. A project that throws its own domain
+  errors and maps them in one filter is following its convention. Medium.
 - **A catch-all `@Catch()` filter also catches `HttpException`.** One that always answers 500
   turns every 400, 401 and 404 into a 500. It must handle `HttpException` first, or extend
   `BaseExceptionFilter` and call `super.catch()`. High.
@@ -48,8 +50,10 @@ Apply these when the project uses NestJS (`@nestjs/core` in `package.json`), on 
   legacy-route warning. Query strings parse flat, so `?filter[status]=done` is one key unless the
   app sets `'query parser'` to `'extended'`. Low.
 - **Serialization only strips class instances.** `ClassSerializerInterceptor` and `@Exclude()` do
-  nothing to a plain object, which is what most ORMs return, so a password hash goes out whole.
-  Map to a response type. High when a secret field is on the row.
+  nothing to a plain object, which is what Prisma, Drizzle and raw drivers return (TypeORM and
+  MikroORM return entity instances, where `@Exclude()` works). Map to a response type, or use
+  `@SerializeOptions({ type })` on Nest 10 and later. Returning the row is a Low shape finding as
+  Step 7 says; a secret field going out with it is hand-off material for the `review-auth` skill.
 - **A response-wrapping interceptor** (`map((data) => ({ data }))`) also wraps every server-sent
   event and streamed chunk. Those routes need skipping. Medium.
 - **Global pipes, filters and guards made with `new`** (`app.useGlobalPipes(new X())`) get no
@@ -58,8 +62,11 @@ Apply these when the project uses NestJS (`@nestjs/core` in `package.json`), on 
 
 ## Hand off
 
-- `CacheInterceptor` on a route that answers per user (it keys by URL), CORS with `origin: true`,
-  and mass assignment through a missing `whitelist`: the `review-auth` skill.
+- To the `review-auth` skill:
+  - `CacheInterceptor` on a route that answers per user (it keys by URL);
+  - CORS with `origin: true`;
+  - mass assignment through a missing `whitelist`;
+  - a secret field (a password hash, a token) in a response body.
 - Query cost, concurrent writes and paging queries: the `check-query-safety` skill.
 
 Adapted from the NestJS agent skills (`nestjs-feature`); see [UPSTREAM.md](../../UPSTREAM.md).
