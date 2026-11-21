@@ -1,6 +1,6 @@
 # playbook
 
-Mshindi Labs Playbook: 44 agent skills for AI coding assistants — code review,
+Mshindi Labs Playbook: 56 agent skills for AI coding assistants — code review,
 debugging, git and release workflow, testing, codebase orientation, and project setup.
 
 A skill is a packaged set of instructions your agent loads when the task matches.
@@ -122,6 +122,7 @@ npx skills remove review-auth  # uninstall
 | `security-reviewer`  | Auth bypasses, missing ownership checks, IDOR, secrets in the diff and history, injection |
 | `migration-reviewer` | Lock types, data loss, reversibility, backfills                                           |
 | `builder`            | Builds one plan task test-first, runs the local gate, commits once, never pushes `main`   |
+| `comment-reviewer`   | Finds and deletes needless comments in a diff and flags the code that needed them         |
 
 <!-- /agents -->
 
@@ -222,6 +223,23 @@ right place instead of the first match.
 | `fix-any-types`         | Replaces every `any` in a TypeScript file with a correct narrow type inferred from actual usage.  |
 | `functional-typescript` | Functional patterns for TS/JS: closures, currying, immutability, composition, the module pattern. |
 
+### Rigor and anti-slop
+
+| Skill                                | What it does                                                                                                                                        |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rigor-mode`                         | Rigorous engineering mode with 24 principles and playbooks for features, bug fixes, refactors, investigations and prototypes. Runs only when asked. |
+| `unslop`                             | Cuts AI tells from prose using numbered patterns, keeping the meaning and tone.                                                                     |
+| `deslop`                             | Removes AI-generated code slop from a diff: needless comments, defensive checks and style drift.                                                    |
+| `no-comments`                        | Deletes comments, fixes the code that needed them, and offers to encode claimed constraints as types, tests or lint.                                |
+| `technical-writing`                  | A layered standard for docs, RFCs, READMEs, PR descriptions and commit messages.                                                                    |
+| `architect`                          | Sketches types, signatures and module structure before code, then stays in the loop while the work is filled in.                                    |
+| `blast-radius`                       | Finds what a change could break elsewhere and proves the one fact it is safe because of by running real code.                                       |
+| `correct`                            | Makes a mistake agents keep repeating impossible, trying architecture, then types, then lint, then tests, then docs.                                |
+| `why`                                | Answers "why does X work this way" from the commit and PR record, with citations.                                                                   |
+| `tdd`                                | Fixes a bug by writing a failing test first, when asked or when a cheap local test exists.                                                          |
+| `typescript-best-practices`          | Typing, narrowing, validation and test rules for `.ts` and `.tsx` files.                                                                            |
+| `thermo-nuclear-code-quality-review` | An extremely strict maintainability review of abstraction quality, giant files and growing condition chains.                                        |
+
 ### Project setup and CI
 
 | Skill                            | What it does                                                                                              |
@@ -284,6 +302,16 @@ Two rules matter enough to repeat here:
 - **Assert on what the skill adds, not on what the model already does.** An assertion
   both arms pass measures the model. `skills/review-auth/evals/evals.json` is the
   reference suite.
+
+---
+
+## Credits
+
+The twelve skills in "Rigor and anti-slop" are adapted from pstack by Lauren Tan and from
+Cursor's `cursor-team-kit` and `thermos` plugins, all MIT, from
+[cursor/plugins](https://github.com/cursor/plugins). They are rewritten so any agent that reads
+`SKILL.md` files can follow them. Each keeps its own `LICENSE.txt`. See
+[`skills/UPSTREAM.md`](skills/UPSTREAM.md) for what came from where and what changed.
 
 ---
 
