@@ -21,7 +21,7 @@ The remaining triggers live only here:
 - Starting any subagent → the first line of its brief is `Read <path>/worker.md and <path>/SKILL.md before anything else.`, with `<path>` the absolute path of this skill's folder. The user's rules live in this skill, so they reach another agent no other way. Keep the rest of the brief to the goal and the task.
 - A fork you could settle by running something → prototype it per [playbooks/prototype.md](playbooks/prototype.md) instead of asking.
 - Code → name the data shape first. Across a function boundary → the `architect` skill. More than one valid shape → sketch two shapes with the `architect` skill. Contested design → the `thermo-nuclear-code-quality-review` skill for structure and the `review-changes` skill for risk.
-- Prose, your reply included → the `unslop` skill. Docs, PR descriptions, commit messages → the `technical-writing` skill.
+- Prose, your reply included → the `unslop` skill. Docs → the `technical-writing` skill. Commit messages and PR bodies follow the `commit-changes` skill and the `create-pr` skill for format, with the `technical-writing` skill for sentence-level rules.
 - Before commit → the `deslop` skill. Before review → the `no-comments` skill.
 - Shipping UI or CLI work → drive the real surface with the browser or terminal tooling your agent has.
 - A number you measured → [principles/explain-the-number.md](principles/explain-the-number.md).
@@ -91,7 +91,7 @@ You own every subagent's work. Review the diff and write your own summary.
 
 ## Beside the existing skills
 
-`rigor-mode` is a layer over the skills that already own these tasks, not a replacement. It layers over the `debug-issue` skill for the bug hunt and the `refactor-safely` skill for refactoring mechanics, and adds the principles and the steps in its playbooks. When the `ship-feature` workflow or a builder agent is driving, their rules on test-first and one commit per task win. Apply the principles inside those rules.
+`rigor-mode` is a layer over the skills that already own these tasks, not a replacement. It layers over the `debug-issue` skill for the bug hunt and the `refactor-safely` skill for refactoring mechanics, and adds the principles and the steps in its playbooks. When the `ship-feature` workflow (if your setup has one) or a builder agent is driving, their rules on test-first and one commit per task win. Apply the principles inside those rules.
 
 ## Writing the reply
 

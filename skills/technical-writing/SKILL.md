@@ -1,7 +1,7 @@
 ---
 name: technical-writing
 description: >
-  Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Trigger on "write the docs", "review this README", "tidy this RFC", "write a PR description", "write a commit message", or whenever writing or reviewing docs, RFCs, readmes, PR descriptions, or commit messages.
+  Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Trigger on "write the docs", "review this README", "tidy this RFC", or whenever writing or reviewing docs, RFCs, readmes, and the prose of other documents.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/technical-writing
@@ -68,6 +68,6 @@ One document, one mode. Don't mix modes. Split and link instead.
 ## Voice and repo specifics
 
 - Apply the `unslop` skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
-- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body is a briefing that a reviewer can read in under a minute. Do not paste agent logs, SHA lists, or metric tables. Link them.
+- PR descriptions and commit messages are writing too. For their format, the `commit-changes` skill and the `create-pr` skill own it when they are installed. Apply only the sentence-level rules here. Every layer except Diátaxis applies to them. A PR body is a briefing that a reviewer can read in under a minute. Do not paste agent logs, SHA lists, or metric tables. Link them.
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
-- Indent code snippets with tabs. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.
+- Match the repo's indentation in code snippets. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.

@@ -12,4 +12,6 @@ Be scientific. Every shipped line traces to runtime evidence. Belt-and-suspender
    This is the canonical case of [sequence work into verifiable units](../principles/sequence-verifiable-units.md), the failing test first and the fix on top.
 6. Run [finishing](finishing.md).
 
+When a feature workflow or a builder agent with its own rules is driving, its rules on test-first and one commit per task win.
+
 **Reply:** what was broken, root cause, fix, how you verified. Paste failing-then-passing repro output verbatim.

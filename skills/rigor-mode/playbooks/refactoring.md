@@ -15,4 +15,6 @@ If the cleanup reveals a missing feature or a real bug, split it out and ship th
 7. Confirm the change is worth keeping. The success measure is reduced reader load ([minimize reader load](../principles/minimize-reader-load.md)). If the diff does not lower reader load somewhere, revert it.
 8. Rebase into small ordered commits. A subtraction commit, then the reshape, then any follow-on cleanup. Shape them with [sequence work into verifiable units](../principles/sequence-verifiable-units.md), so each behavior-preserving slice stays green before the next. Run [finishing](finishing.md).
 
+When a feature workflow or a builder agent with its own rules is driving, its rules on test-first and one commit per task win.
+
 **Reply:** the structure that changed, the pin you held it against, the equivalence proof, the reader-load delta, what shipped and what got reverted. No new behavior.

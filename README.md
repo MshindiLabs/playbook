@@ -225,20 +225,20 @@ right place instead of the first match.
 
 ### Rigor and anti-slop
 
-| Skill                                | What it does                                                                                                                                        |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rigor-mode`                         | Rigorous engineering mode with 24 principles and playbooks for features, bug fixes, refactors, investigations and prototypes. Runs only when asked. |
-| `unslop`                             | Cuts AI tells from prose using numbered patterns, keeping the meaning and tone.                                                                     |
-| `deslop`                             | Removes AI-generated code slop from a diff: needless comments, defensive checks and style drift.                                                    |
-| `no-comments`                        | Deletes comments, fixes the code that needed them, and offers to encode claimed constraints as types, tests or lint.                                |
-| `technical-writing`                  | A layered standard for docs, RFCs, READMEs, PR descriptions and commit messages.                                                                    |
-| `architect`                          | Sketches types, signatures and module structure before code, then stays in the loop while the work is filled in.                                    |
-| `blast-radius`                       | Finds what a change could break elsewhere and proves the one fact it is safe because of by running real code.                                       |
-| `correct`                            | Makes a mistake agents keep repeating impossible, trying architecture, then types, then lint, then tests, then docs.                                |
-| `why`                                | Answers "why does X work this way" from the commit and PR record, with citations.                                                                   |
-| `tdd`                                | Fixes a bug by writing a failing test first, when asked or when a cheap local test exists.                                                          |
-| `typescript-best-practices`          | Typing, narrowing, validation and test rules for `.ts` and `.tsx` files.                                                                            |
-| `thermo-nuclear-code-quality-review` | An extremely strict maintainability review of abstraction quality, giant files and growing condition chains.                                        |
+| Skill                                | What it does                                                                                                                                                   |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rigor-mode`                         | Rigorous engineering mode with 24 principles and playbooks for features, bug fixes, refactors, investigations, prototypes and finishing. Runs only when asked. |
+| `unslop`                             | Cuts AI tells from prose using numbered patterns, keeping the meaning and tone.                                                                                |
+| `deslop`                             | Removes AI-generated code slop from a diff: needless comments, defensive checks and style drift.                                                               |
+| `no-comments`                        | Deletes comments, fixes the code that needed them, and offers to encode claimed constraints as types, tests or lint.                                           |
+| `technical-writing`                  | A layered standard for docs, RFCs, READMEs, PR descriptions and commit messages.                                                                               |
+| `architect`                          | Sketches types, signatures and module structure before code, then stays in the loop while the work is filled in.                                               |
+| `blast-radius`                       | Finds what a change could break elsewhere and proves the one fact it is safe because of by running real code.                                                  |
+| `correct`                            | Makes a mistake agents keep repeating impossible, trying architecture, then types, then lint, then tests, then docs.                                           |
+| `why`                                | Answers "why does X work this way" from the commit and PR record, with citations.                                                                              |
+| `tdd`                                | Fixes a bug by writing a failing test first, when asked or when a cheap local test exists.                                                                     |
+| `typescript-best-practices`          | Typing, narrowing, validation and test rules for `.ts` and `.tsx` files.                                                                                       |
+| `thermo-nuclear-code-quality-review` | An extremely strict maintainability review of abstraction quality, giant files and growing condition chains.                                                   |
 
 ### Project setup and CI
 
