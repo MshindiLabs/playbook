@@ -20,23 +20,9 @@ Use this command for urgent production bugs that cannot wait for the normal deve
 
 ## Commit & PR hygiene (always applies)
 
-These rules apply to every commit message, PR title, PR body, and release note this command produces.
+Include the ticket or issue reference when one exists, and never invent one. Never add AI or agent attribution (`Co-authored-by:` naming an AI tool, "Generated with ..." and the like) to a commit, PR or release note, and strip any you find. The `commit-changes` skill has the full rules.
 
-**Ticket reference — always include one when it exists.**
-
-- Derive the ticket, in priority order, from:
-  1. The user's explicit input for this run
-  2. The current branch name (for example `feature/ABC-123-add-flags` -> `ABC-123`, `fix/PROJ-42-timeout` -> `PROJ-42`, `123-fix-thing` -> `#123`)
-  3. Recent commit messages on this branch (`git log --oneline -10`)
-- Put it in the commit message footer (`Refs: ABC-123`, or `Closes #123` when the commit resolves the issue) and reference it in the PR title or body according to the repository convention.
-- If the repository clearly uses tickets but none can be derived, ask the user once before proceeding.
-- Never invent a ticket number. If genuinely none exists, proceed without one.
-
-**No agentic annotations — ever.**
-
-- Never add, and always strip when found: `Co-authored-by:` lines referencing AI tools, `Generated with ...`, `Made-with: ...`, robot emoji (🤖) watermarks, "This commit/PR was created by ..." notes, or any other AI/agent attribution or tool advertisement.
-- This applies to commit messages, amended messages, PR titles, PR bodies, release notes, and changelog entries.
-- When amending, rebasing, cherry-picking, or reusing an existing message, remove any such annotations already present before continuing.
+If a guard or a git hook blocks a commit or push, fix the cause and never bypass it (no `--no-verify`). See "If a guard or a git hook blocks you" in the `commit-changes` skill.
 
 ---
 
@@ -82,12 +68,23 @@ Record the base ref: `BASE_REF`
 
 ## Step 3 — Create the hotfix branch
 
+Name the branch the way the project does. Look, in this order:
+
+1. The project's documented branch pattern (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`).
+2. The pattern its existing branches follow, hotfix branches first:
+
 ```bash
-git fetch origin
-git checkout -b hotfix/<short-description> <BASE_REF>
+git branch -r --sort=-committerdate | head -20
 ```
 
-Name the branch clearly: `hotfix/fix-payment-null-crash`, `hotfix/v1.4.3-auth-bypass`, etc.
+3. Only if neither shows a pattern, fall back to `hotfix/<short-description>`, for example `hotfix/fix-payment-null-crash` or `hotfix/v1.4.3-auth-bypass`.
+
+Record the name as `HOTFIX_BRANCH`, then create it:
+
+```bash
+git fetch origin
+git checkout -b <HOTFIX_BRANCH> <BASE_REF>
+```
 
 ---
 
@@ -117,12 +114,18 @@ Rules:
 
 ## Step 5 — Run the local pre-hotfix checks
 
-A hotfix must still be verified before shipping:
+A hotfix must still be verified before shipping. Use the project's own package manager and scripts:
+
+- Package manager, from the lockfile: `pnpm-lock.yaml` means pnpm, `yarn.lock` means yarn, `bun.lock` or `bun.lockb` means bun, `package-lock.json` means npm.
+- Scripts, from `package.json` (or the `Makefile` or CI workflow for a project that is not Node): run the typecheck, lint and test scripts that exist, under the names the project gives them.
+- Narrow the test run to the affected area with the test runner's own filter.
+
+Only if the project defines none of these, fall back to:
 
 ```bash
 npm run typecheck
 npm run lint
-npm test -- --testPathPattern=<relevant-area>
+npm test -- <relevant-area>
 ```
 
 If CI is available, confirm the fix does not break any existing tests.
@@ -148,10 +151,20 @@ EOF
 
 ---
 
-## Step 7 — Push and open a PR to the production branch
+## Step 7 — Confirm with the user, then push and open a PR to the production branch
+
+Urgency does not remove this step. Before the first push, show the user:
+
+- the hotfix branch (`HOTFIX_BRANCH`) and the base it will merge into (`TARGET_BRANCH`)
+- the commits on the branch (`git log <BASE_REF>..HEAD --oneline`)
+- the PR title
+
+Then stop and wait for a yes. The request that started this skill is not that yes, because the user had not seen this summary. Without a yes, do not push and do not create the PR.
+
+After the yes, push:
 
 ```bash
-git push -u origin hotfix/<short-description>
+git push -u origin <HOTFIX_BRANCH>
 ```
 
 Then create the PR targeting the production base:
@@ -159,7 +172,7 @@ Then create the PR targeting the production base:
 ```bash
 gh pr create \
   --base <TARGET_BRANCH> \
-  --head hotfix/<short-description> \
+  --head <HOTFIX_BRANCH> \
   --title "hotfix: <short description>" \
   --body "$(cat <<'EOF'
 ## Summary
@@ -197,9 +210,11 @@ PR for review; the merge-back gets the same treatment. Open one PR per target:
 
 ```bash
 # one PR per merge-back target
-gh pr create --base main    --head <hotfix-branch> --title "merge-back: <description>"
-gh pr create --base develop --head <hotfix-branch> --title "merge-back: <description>"
+gh pr create --base main    --head <HOTFIX_BRANCH> --title "merge-back: <description>"
+gh pr create --base develop --head <HOTFIX_BRANCH> --title "merge-back: <description>"
 ```
+
+Before opening them, show the user each merge-back PR (base, head, title) and wait for a yes.
 
 Cherry-pick onto a fresh branch per target instead if the history shapes differ, then
 open the PR from that branch.
@@ -237,7 +252,7 @@ git push origin v<major>.<minor>.<patch+1>   # ask before running — this may t
 Hotfix summary
 
 Base version      <BASE_REF>
-Hotfix branch     hotfix/<name>
+Hotfix branch     <HOTFIX_BRANCH>
 Target branch     <where it merges>
 Commit            <sha> — <message>
 

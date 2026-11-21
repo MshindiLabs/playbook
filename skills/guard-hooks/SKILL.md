@@ -8,7 +8,7 @@ description: >
   guards", "why was my commit blocked by a playbook guard", "turn off a guard", "remove the guard
   hooks". Works in Claude Code and Codex.
 license: MIT
-compatibility: Needs Node 20 or later and git. Hooks run in Claude Code and Codex; Cursor imports the Claude Code entries.
+compatibility: Needs Node 20 or later and git, on macOS or Linux. Not tested on Windows. Hooks run in Claude Code and Codex; Cursor imports the Claude Code entries.
 ---
 
 # Guard hooks
@@ -32,13 +32,13 @@ A skill tells an agent what to do. A hook is a script the agent's harness runs b
 
 The installer edits the user's own agent config, so show the change and get a yes before applying it.
 
-1. Find this skill's directory (the one holding this file) and run the installer with no flags. It prints what it would write and changes nothing:
+1. Find this skill's directory: the one holding this `SKILL.md`. Installed with `npx skills` it is `~/.agents/skills/guard-hooks` (or the same path under the project for a project install). Installed as a plugin it is `skills/guard-hooks` inside the plugin's own folder, which the agent names when it loads this skill. Run the installer from there with no flags. It prints what it would write and changes nothing:
 
    ```bash
    node scripts/install.mjs
    ```
 
-2. Show the user that output. Tell them which files change: `~/.claude/settings.json` for Claude Code, and `~/.codex/hooks.json` for Codex when Codex is installed. Other settings and other hooks in those files are kept, and each file is backed up beside itself first.
+2. Show the user that output. Tell them what changes: the guard scripts are copied to `~/.playbook/guard-hooks/scripts`, and hook entries pointing at that copy are written to `~/.claude/settings.json` for Claude Code, and to `~/.codex/hooks.json` for Codex when Codex is installed. Other settings and other hooks in those files are kept, and each file is backed up beside itself first.
 3. Only after the user agrees, apply it:
 
    ```bash
@@ -50,7 +50,17 @@ The installer edits the user's own agent config, so show the change and get a ye
    - **Codex**: open Codex and run `/hooks` to review and trust the new hooks. Codex skips a hook until it is trusted, and asks again when an entry changes.
    - **Cursor**: nothing to install. Cursor imports hooks from `~/.claude/settings.json` when its third-party import setting is on. This is from Cursor's documentation and has not been tested with this pack. The stop check runs only when the agent reports a first stop the way Claude Code does, so it cannot loop there.
 
-Use `--agent claude` or `--agent codex` to install for one agent. Running the installer again is safe: it replaces its own hooks and never duplicates them. Run it again after the skill moves or updates to a new path.
+Use `--agent claude` or `--agent codex` to install for one agent. Running the installer again is safe: it replaces its own hooks and never duplicates them.
+
+The hooks run the copy, not the skill. Updating or removing the skill therefore leaves the guards as they were. After the skill updates, run the installer with `--apply` again to refresh the copy.
+
+## Check
+
+```bash
+node scripts/install.mjs --check
+```
+
+This lists each installed hook and whether its script exists, and says when the copy is older than the skill. It exits 1 when a hook points at a script that is not there. That state matters because it is silent: a hook whose script is missing fails, the agent treats the failure as harmless and runs the tool, and nothing says a guard is off. Run the check when the user asks whether the guards are working.
 
 The hooks run `node` from the `PATH` the agent starts with. If the agent reports that `node` was not found, start it from a shell where `node --version` works.
 
@@ -62,7 +72,13 @@ Codex gets the pre-tool guards only. `verify-on-stop` relies on the agent saying
 node scripts/install.mjs --remove --apply
 ```
 
-This deletes exactly the entries the installer added and nothing else.
+This deletes exactly the entries the installer added, and the copy of the scripts once no agent uses it. Nothing else is touched.
+
+Remove the hooks before removing the skill. If the skill is already gone, the copy can remove itself:
+
+```bash
+node ~/.playbook/guard-hooks/scripts/install.mjs --remove --apply
+```
 
 ## Switch a guard off
 
@@ -102,5 +118,5 @@ Keep real git hooks and CI as the backstop: commitlint for messages, a secret sc
 
 - A guard that fails internally lets the action through and writes one line to stderr. It never blocks because of its own error.
 - Input over 1 MiB is not read, and input is never echoed back.
-- Nothing is written to disk.
+- A guard writes nothing to disk. Only the installer does: the copy of the scripts and the hook entries.
 - A command with no `git` or `gh` in it returns before anything is parsed.

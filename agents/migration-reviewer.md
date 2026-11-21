@@ -1,6 +1,6 @@
 ---
 name: migration-reviewer
-description: Use this agent to review database schema changes and migration files before they run, covering lock types and duration, data loss, reversibility, backfills, and compatibility with the code that is deployed while the migration runs. Use it whenever a diff adds or edits a migration, changes a schema file, or alters indexes, constraints or column types, or when the user asks for a migration review.
+description: Use this agent to review database schema changes and migration files before they run, covering lock types and duration, data loss, reversibility, backfills, and compatibility with the code that is deployed while the migration runs. Use it only when the user asks for a migration review, or when a workflow dispatches it for a diff that adds or edits a migration, changes a schema file, or alters indexes, constraints or column types.
 model: opus
 color: yellow
 tools: Read, Grep, Glob, Bash, Skill

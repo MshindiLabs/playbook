@@ -1,0 +1,63 @@
+{
+  "skill_name": "break-into-issues",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Break this into issues so agents can pick it up.\n\n## Saved searches\n\nUsers can save the current search (query text plus the active filters) under a name, see their saved searches in the sidebar, click one to run it again, and delete one. A user sees only their own. Maximum 20 per user; the 21st save shows an error.\n\nStack: Postgres, a REST API (`/api/saved-searches`), a React app. Nothing for this exists yet: no table, no endpoints, no UI. The search page and its filter state already exist.\n\nWe have no GitHub remote on this prototype repo yet and no tracker tools connected.",
+      "expected_output": "A proposed breakdown and three questions, with nothing published. Each issue is a vertical slice that runs through schema, API, UI and tests for one behaviour (for example \"save the current search and see it listed\", then \"run a saved search\", \"delete a saved search\", \"enforce the 20 limit\"), not a layer (\"create the table\", \"build the API\", \"build the UI\"). Each issue shows a title, what blocks it, and what it delivers. The reply asks whether the granularity is right, whether the blocking edges are right, and whether anything should be merged or split, then waits. No issue files are written and no tracker is called.",
+      "files": [],
+      "assertions": [
+        "Presents the breakdown as a numbered list in which every issue has a title, a \"Blocked by\" entry and a statement of the end-to-end behaviour it delivers",
+        "Every issue is a vertical slice that is demoable by itself: no issue is a single layer such as \"add the saved_searches table\", \"build the REST endpoints\" or \"build the sidebar UI\"",
+        "The blocking edges are real dependencies: the first slice (save and list) has no blockers, and slices that need a saved search to exist (run, delete, the limit) are blocked by it and not by each other without reason",
+        "Asks the user the skill's three questions: is the granularity right, are the blocking edges correct, should any issues be merged or split",
+        "Publishes nothing in this turn: no `gh issue create`, no tracker tool call, and no files written under .scratch/ or anywhere else",
+        "Uses the spec's own vocabulary (saved search, filters, sidebar) and does not put file paths or code snippets in the issue descriptions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Turn this into tickets.\n\nWe need to rename the `users.fullname` column to `display_name`. It's read or written in roughly 140 places: the `api` package (about 60), the `worker` package (about 30), the `admin` app (about 35) and the `reports` package (about 15), all in one monorepo with one CI run. The ORM model is shared, so the moment the column or the model field is renamed every one of those call sites fails to compile. We deploy continuously from main, so main has to stay green.",
+      "expected_output": "An expand-contract sequence, not vertical slices and not one giant rename. First an expand issue that adds display_name beside fullname and keeps the two in step, so nothing breaks. Then one migrate issue per package (api, worker, admin, reports), each blocked by the expand and each leaving CI green because the old form still exists. Last a contract issue that drops fullname, blocked by every migrate issue. The reply names this as a wide refactor and says why vertical slicing does not apply, then asks for approval before publishing.",
+      "files": [],
+      "assertions": [
+        "Identifies the work as a wide refactor (one mechanical change whose blast radius spans the codebase) and says vertical slices do not fit it",
+        "The first issue is the expand step: add display_name alongside fullname (and keep them in step) so that no call site breaks, with no blockers",
+        "Migration is split into batches by package (api, worker, admin, reports, or a comparable grouping), each its own issue and each blocked by the expand issue",
+        "The last issue is the contract step that removes fullname, and it is blocked by every migrate batch",
+        "States that CI stays green between batches because the old form still exists until the contract step",
+        "Does not propose a single issue that renames the column and fixes all 140 call sites at once",
+        "Presents the breakdown for approval and publishes nothing in this turn"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The breakdown below is the one we settled on. I approve it as it stands, publish it. This repo has no GitHub remote, `gh` isn't installed, and there are no tracker tools, so do whatever the fallback is. Feature slug: csv-export.\n\n1. **Export the current report as CSV**\n   Blocked by: none\n   Delivers: a user on a report page clicks Export and downloads a CSV of the rows on screen.\n2. **Export respects the active filters and sort**\n   Blocked by: 1\n   Delivers: the downloaded CSV has the same rows in the same order as the filtered, sorted report.\n3. **Large exports are emailed as a link**\n   Blocked by: 1\n   Delivers: an export over 50,000 rows is built in the background and the user gets an email with a download link.\n4. **Export history page**\n   Blocked by: 3\n   Delivers: a user sees their background exports from the last 30 days and can download each again.",
+      "expected_output": "Four files, one per issue, in .scratch/csv-export/issues/, named 01-<slug>.md to 04-<slug>.md in dependency order. Each has a \"# <NN>: <title>\" heading and the sections What to build, Acceptance criteria (as a checklist) and Blocked by. Issue 01 says it can start immediately; 02 and 03 reference 01; 04 references 03. There is no Parent section, because the source was not an existing issue. The reply tells the user where the files are. It does not write one combined file.",
+      "files": [],
+      "assertions": [
+        "Writes exactly four issue files under .scratch/csv-export/issues/, one per issue, and no single combined file",
+        "The files are named <NN>-<slug>.md and numbered from 01 in dependency order, so a blocker always has a lower number than the issue it blocks",
+        "Each file starts with a \"# <NN>: <title>\" heading and has the sections \"What to build\", \"Acceptance criteria\" and \"Blocked by\"",
+        "Acceptance criteria are written as checklist items (- [ ]) and describe behaviour a user can observe, not implementation steps",
+        "The \"Blocked by\" sections match the approved edges: 01 says none (can start immediately), 02 and 03 reference 01, 04 references 03",
+        "No file has a \"Parent\" section, since the breakdown did not come from an existing issue",
+        "Publishes the approved breakdown as given: it does not add, drop, merge or re-scope issues after approval, and tells the user where the files were written"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Break #212 into issues and file them on GitHub, then close #212 since the children replace it. Here's the issue:\n\n> **#212 Team invitations**\n> Admins can invite people to a team by email. The invitee gets an email with a link, clicks it, and lands in the team after signing up or logging in. Admins can see pending invitations and revoke one. Invitations expire after 7 days.\n>\n> Comment from priya-r: revoked or expired links should show a clear \"this invitation is no longer valid\" page, not a 404.\n\n`gh` is installed and signed in for this repo.",
+      "expected_output": "A proposed breakdown for approval, with nothing filed yet. The slices are vertical (for example: invite by email and accept the link; see pending invitations; revoke an invitation; expiry after 7 days with the \"no longer valid\" page from the comment). The reply says that once approved it will create the issues with `gh issue create`, blockers first, each linked to #212 as its parent or sub-issue. It says it will not close or modify #212, and why. No `gh issue create` and no `gh issue close` is run in this turn.",
+      "files": [],
+      "assertions": [
+        "Presents the breakdown and asks for approval before filing anything: no `gh issue create` is run in this turn",
+        "Does not close, edit or relabel #212, and tells the user it will not: the skill does not close or modify a parent issue",
+        "Plans to link each new issue to #212 as its parent (a sub-issue where the tracker supports it, or a \"Parent\" section in the body)",
+        "The breakdown covers the comment as well as the issue body: the \"this invitation is no longer valid\" page for revoked or expired links appears in a slice",
+        "Each slice is vertical and names its blockers; none is a layer-only issue such as \"invitations table\" or \"email template\"",
+        "Says it will publish in dependency order, blockers first, so that later issues can reference real issue numbers"
+      ]
+    }
+  ]
+}

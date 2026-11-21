@@ -1,19 +1,15 @@
 ---
 name: draft-ui-redesign
 description: >
-  Reads an existing page's UI code and the API responses that feed it, then
-  writes a paste-ready generation prompt for a design tool (Claude Design,
-  Google Stitch, v0, Lovable, Figma Make) that produces a modern, state-of-the-art
-  redesign benchmarked against the industry leaders for that product domain —
-  Stripe and Mercury for fintech, Linear and Height for tickets and project work,
-  Vercel and Railway for developer tooling. Also specs any additive, non-breaking
-  APIs the new design needs. Use this skill whenever the user wants to redesign,
-  modernize, refresh, or improve the look of a page or screen; asks for a design
-  prompt, design brief, or UI spec; mentions Claude Design, Stitch, v0, Lovable,
-  or Figma Make; says a page looks dated, basic, ugly, or "like a bootstrap admin
-  template"; or wants their UI to feel like Linear, Stripe, or Vercel. The
-  redesign is presentation-only — it preserves every existing data point, action,
-  and behaviour, and never changes application logic or existing API contracts.
+  Reads an existing page's UI code and the API responses that feed it, then writes a
+  paste-ready generation prompt for a design tool (Claude Design, Google Stitch, v0,
+  Lovable, Figma Make) that produces a modern redesign benchmarked against the leaders
+  in that product domain. Also specs any additive, non-breaking APIs the new design
+  needs. Use when the user wants to redesign, modernize, refresh, or improve the look of
+  a page or screen; asks for a design prompt, design brief, or UI spec; names one of
+  those design tools; or says a page looks dated, basic, or "like a bootstrap admin
+  template". Presentation only: it preserves every existing data point, action, and
+  behaviour, and never changes application logic or existing API contracts.
 license: MIT
 metadata:
   author: mshindi-labs

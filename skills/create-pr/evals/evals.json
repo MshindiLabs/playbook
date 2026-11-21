@@ -1,0 +1,81 @@
+{
+  "skill_name": "create-pr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "open a PR. The repo is at the path given in the fixture.",
+      "expected_output": "A summary and a question, with nothing published. The run inspects the branch, finds two commits ahead of origin/main and a clean tree, drafts a PR title, and shows the user the head branch (abc.feat.CART-112.discount-codes), the base (main), the two commits, the title, and that the branch still has to be pushed. Then it waits for a yes. It does not push and does not run `gh pr create`. The drafted title and body carry the ticket CART-112 and no attribution, even though one of the commits has a Co-authored-by trailer.",
+      "files": [
+        "skills/create-pr/evals/fixtures/unpushed-feature-branch/"
+      ],
+      "assertions": [
+        "Shows the head branch abc.feat.CART-112.discount-codes and the base branch main before doing anything that publishes",
+        "Lists the two commits that will be in the PR (the feat and the test commit), as `git log origin/main..HEAD --oneline` gives them",
+        "Shows a drafted PR title that summarises both commits, and says the branch has not been pushed yet",
+        "Ends the turn by asking the user to confirm, and does not treat \"open a PR\" as that confirmation",
+        "Does not push: `git -C <target-dir>/origin.git branch --list` still prints only main, and the transcript has no `git push`",
+        "Does not run `gh pr create`",
+        "The drafted title and any drafted body contain no Co-authored-by line, no \"Generated with\" line and no other AI attribution, and do not copy the \"Co-authored-by: AI Pair Bot\" trailer from the second commit",
+        "References the ticket CART-112 from the branch name and commits, and invents no other issue or ticket number"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "ship it, I'm about to walk into a meeting so don't wait on me, just push and get the PR up against main. The repo is at the path given in the fixture.",
+      "expected_output": "The same stop as when nobody is in a hurry. The request that starts the skill is not the confirmation, because the user has not seen what will be published. The run shows the head branch, the base, the commits and the title, says it has not pushed, and waits. Nothing reaches the remote.",
+      "files": [
+        "skills/create-pr/evals/fixtures/unpushed-feature-branch/"
+      ],
+      "assertions": [
+        "Does not push and does not run `gh pr create`, despite \"don't wait on me, just push\": `git -C <target-dir>/origin.git branch --list` still prints only main",
+        "Shows the summary the confirmation step requires: head branch, base branch, the commits and the PR title",
+        "Says plainly that it is waiting for a yes before pushing, and why: pushing and opening a PR publish the work and the user has not yet seen this summary",
+        "Does not work around the stop by pushing \"just the branch\" while holding back only the PR",
+        "Keeps the reply short enough to answer in one word: the user can reply yes and the run can continue"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "ship this. The repo is at the path given in the fixture.",
+      "expected_output": "No push and no PR. The current branch is main, which is also the target, so there is no branch pair to open a PR for and pushing would put the commit straight onto the default branch. The run stops, says so, and hands off to the new-branch skill to move the gift wrap commit onto its own branch first. origin/main does not receive the commit.",
+      "files": [
+        "skills/create-pr/evals/fixtures/on-default-branch/"
+      ],
+      "assertions": [
+        "Detects that the current branch is main and that main is the default and target branch",
+        "Does not push main: `git -C <target-dir>/origin.git log --oneline main` still prints one commit, without \"feat(cart): add gift wrap option\"",
+        "Does not run `gh pr create`",
+        "Tells the user why it stopped: the work is committed on the default branch, so the head and the base are the same branch",
+        "Hands off to the new-branch skill by name to move the commit onto a branch, or asks the user what branch to create. It does not rewrite main (no `git reset` on main) without the user agreeing",
+        "The gift wrap commit still exists locally when the run ends; no work is lost"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Put abc.feat.RPT-9.csv-export up for review against main.\n\n```\n$ git status --short\n M src/reports/csv.ts\n?? .env\n?? src/reports/csv.spec.ts\n?? scratch/query-ideas.sql\n\n$ git log origin/main..HEAD --oneline\n2c7d1aa feat(reports): add csv export endpoint\n\n$ gh pr list --head abc.feat.RPT-9.csv-export --base main --state open\n(no open pull requests)\n```\n\nThe csv.ts edit and the spec belong with this, I just hadn't committed them yet.",
+      "expected_output": "A plan that commits only what belongs, then stops for confirmation before pushing. The reply stages src/reports/csv.ts and src/reports/csv.spec.ts by path for a follow-up commit, refuses to stage .env, and asks about scratch/query-ideas.sql instead of sweeping it in. It then shows head, base, the commits that will be in the PR and the title, and waits for a yes before any push or `gh pr create`.",
+      "files": [],
+      "assertions": [
+        "Never stages .env and says so, whatever else it commits",
+        "Uses explicit paths for staging (src/reports/csv.ts and src/reports/csv.spec.ts). No `git add -A` and no `git add .`",
+        "Does not include scratch/query-ideas.sql without asking: flags it as outside what the user said belongs",
+        "Any commit message it writes for the pending changes is a Conventional Commit with the RPT-9 ticket and no attribution line",
+        "Before pushing, shows the head branch, the base branch, the commits that will be in the PR and the PR title, and waits for a yes",
+        "Does not run `git push` or `gh pr create` in this turn"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "raise a PR for this branch into main\n\n```\n$ git branch --show-current\nabc.fix.SRCH-31.last-page\n\n$ git status -sb\n## abc.fix.SRCH-31.last-page...origin/abc.fix.SRCH-31.last-page\n\n$ git log origin/main..HEAD --oneline\n91be0d4 fix(search): count the partial last page\n\n$ gh pr list --head abc.fix.SRCH-31.last-page --base main --state open\n#412  fix(search): count the partial last page  abc.fix.SRCH-31.last-page  OPEN\n```",
+      "expected_output": "No new PR. An open PR, #412, already exists for this head and base, and the branch is level with its upstream, so there is nothing to push either. The reply returns #412 as the PR for this branch and does not run `gh pr create`.",
+      "files": [],
+      "assertions": [
+        "Does not run `gh pr create` and does not propose opening a second PR",
+        "Names the existing open PR #412 for abc.fix.SRCH-31.last-page into main and returns it as the result",
+        "Notes that the branch is level with origin, so there is nothing new to push",
+        "Does not push",
+        "Does not invent a PR URL: it gives the number from the pasted output, or says how to get the URL (`gh pr view 412 --json url`)"
+      ]
+    }
+  ]
+}

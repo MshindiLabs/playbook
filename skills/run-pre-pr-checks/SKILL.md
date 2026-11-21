@@ -45,6 +45,10 @@ cat package.json | grep -E '"(lint|type-?check|test|format|check|validate)"'
 
 Also inspect `Makefile`, `.github/workflows/`, or `scripts/` for the canonical CI check sequence.
 
+Find the package manager from the lockfile: `pnpm-lock.yaml` means pnpm, `yarn.lock` means yarn, `bun.lock` or `bun.lockb` means bun, `package-lock.json` means npm. In a workspace, run from the directory the project's own docs or CI use.
+
+The commands in the steps below are written for npm and are a fallback only. Run the project's own script with the detected package manager (`pnpm lint`, `yarn typecheck`), and use a bare tool command such as `npx eslint .` only when the project has that tool and no script for it.
+
 Do not invent commands. Only run scripts that exist and are clearly intended for local use.
 
 ---

@@ -1,10 +1,10 @@
 ---
 name: deslop
 description: >
-  Remove AI-generated code slop and clean up code style. Trigger on "deslop
-  this", "remove the AI slop", "clean up the AI-looking code in this branch",
-  "strip the unnecessary comments and defensive checks", or "this diff looks
-  machine-written".
+  Remove AI-generated slop from code and clean up code style. Trigger on "deslop this",
+  "remove the AI slop", "clean up the AI-looking code in this branch", "strip the
+  unnecessary comments and defensive checks", or "this diff looks machine-written". For
+  prose use the `unslop` skill. For comments alone use the `no-comments` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 cursor-team-kit/skills/deslop

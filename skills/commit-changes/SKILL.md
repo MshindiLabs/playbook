@@ -20,23 +20,7 @@ If a repository-specific convention conflicts with this file, prefer the reposit
 
 ## Commit & PR hygiene (always applies)
 
-These rules apply to every commit message, PR title, PR body, and release note this command produces.
-
-**Ticket reference — always include one when it exists.**
-
-- Derive the ticket, in priority order, from:
-  1. The user's explicit input for this run
-  2. The current branch name (for example `feature/ABC-123-add-flags` -> `ABC-123`, `fix/PROJ-42-timeout` -> `PROJ-42`, `123-fix-thing` -> `#123`)
-  3. Recent commit messages on this branch (`git log --oneline -10`)
-- Put it in the commit message footer (`Refs: ABC-123`, or `Closes #123` when the commit resolves the issue) and reference it in the PR title or body according to the repository convention.
-- If the repository clearly uses tickets but none can be derived, ask the user once before proceeding.
-- Never invent a ticket number. If genuinely none exists, proceed without one.
-
-**No agentic annotations — ever.**
-
-- Never add, and always strip when found: `Co-authored-by:` lines referencing AI tools, `Generated with ...`, `Made-with: ...`, robot emoji (🤖) watermarks, "This commit/PR was created by ..." notes, or any other AI/agent attribution or tool advertisement.
-- This applies to commit messages, amended messages, PR titles, PR bodies, release notes, and changelog entries.
-- When amending, rebasing, cherry-picking, or reusing an existing message, remove any such annotations already present before continuing.
+Include the ticket or issue reference when one exists, and never invent one. Never add AI or agent attribution (`Co-authored-by:` naming an AI tool, "Generated with ..." and the like) to a commit, PR or release note, and strip any you find. Read the full rules in [references/commit-and-pr-hygiene.md](references/commit-and-pr-hygiene.md) before writing a message.
 
 ---
 
@@ -45,11 +29,15 @@ These rules apply to every commit message, PR title, PR body, and release note t
 Run all of these before staging or committing:
 
 ```bash
+git branch --show-current
+git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null
 git status --short
 git diff
 git diff --staged
 git log -5 --oneline
 ```
+
+The second command prints the remote's default branch as `origin/<name>`; if it prints nothing, treat `main` or `master` as the default. If the current branch is the default branch, or a branch the project documents as protected, stop. Do not stage or commit. Hand off to the `new-branch` skill to move the work onto a branch, then come back here. If that skill is not installed, tell the user and ask which branch to create. Commit on the default branch only when the user has said, in this conversation, to commit there.
 
 Read the output carefully. You must understand:
 
@@ -73,6 +61,8 @@ Look for these common locations:
 .github/PULL_REQUEST_TEMPLATE.md
 .github/PULL_REQUEST_TEMPLATE/*.md
 ```
+
+If there is no PR template in this repo, skip the rest of this step and take the commit style from the recent history in Step 1.
 
 If a PR template exists:
 
@@ -229,12 +219,12 @@ minted after an account is disabled.
 ```
 
 ```text
-feat(payments)!: switch webhook verification to Stripe
+feat(payments)!: verify webhooks with the v2 signature scheme
 
-Align payment processing with the new provider rollout and remove
-legacy verification assumptions.
+Move webhook verification to the v2 signature scheme and remove the
+v1 fallback.
 
-BREAKING CHANGE: legacy Flutterwave webhook signatures are no longer accepted
+BREAKING CHANGE: v1 webhook signatures are no longer accepted
 ```
 
 ---
@@ -271,8 +261,20 @@ EOF
 Rules:
 
 - Never append `Co-authored-by:`, AI attribution, or `Made-with: Cursor`
-- Do not use `--no-verify` unless the user explicitly asks for it
-- If hooks fail, inspect the failure, fix the issue, and retry with a new commit attempt
+- Never use `--no-verify` or any other way around a hook
+- If a hook or a guard stops the commit, follow the next section
+
+---
+
+## If a guard or a git hook blocks you
+
+A commit or push can be stopped by the repository's git hooks (pre-commit, commit-msg, pre-push) or by an agent guard. The `guard-hooks` skill installs guards that block `--no-verify`, attribution lines, staged secrets and commit subjects that are not Conventional Commits, and that ask before a commit on the default branch.
+
+1. Read the message. It names what was blocked and why.
+2. Fix the cause: reword the subject, remove the attribution line, unstage the secret, fix the lint or test failure.
+3. Run the same command again, as a new attempt.
+
+Never bypass the block: no `--no-verify`, no `-n` on a commit, no `HUSKY=0`, no changed hooks path, and no edit to hook or guard config to get past it. If you think the block is wrong, tell the user what was blocked and why you think so, and let them decide. Switching a guard off is their call.
 
 ---
 

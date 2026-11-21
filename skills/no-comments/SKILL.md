@@ -1,7 +1,10 @@
 ---
 name: no-comments
 description: >
-  Hunt and delete comments, fix the code that needed them, and offer to encode claimed constraints as types, tests or lint. Trigger on "remove the comments", "no comments", "clean up the comments in this diff", "this comment is a workaround apology".
+  Hunt and delete comments in code, fix the code that needed them, and offer to encode
+  claimed constraints as types, tests or lint. Trigger on "remove the comments", "no
+  comments", "clean up the comments in this diff", "this comment is a workaround
+  apology". For wider code clean-up use the `deslop` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/no-comments

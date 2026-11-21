@@ -1,17 +1,12 @@
 ---
 name: functional-typescript
 description: >
-  Functional programming patterns for TypeScript and JavaScript. Use this skill
-  when writing or reviewing code that should follow FP principles: pure
-  functions, immutability, closures, partial application, currying, function
-  composition, higher-order functions, and the module pattern. Also use for
-  TypeScript types that support FP: Result, Option, discriminated unions,
-  Readonly, and generic HOF signatures. When the codebase imports from fp-ts/*,
-  also apply the fp-ts library rules: pipe/flow composition, Option, Either,
-  TaskEither, and Do notation. Trigger on questions like "how do I avoid
-  mutation", "how do I curry this", "how should I structure this module",
-  "how do I type a higher-order function", "how do I handle async errors without
-  try-catch", or any request to make code more functional.
+  Functional programming patterns for TypeScript and JavaScript: pure functions,
+  immutability, composition, currying, higher-order functions, and Result and Option
+  types. Applies the fp-ts rules when the codebase imports fp-ts. Trigger on "how do I
+  avoid mutation", "how do I curry this", "how do I handle async errors without
+  try-catch", or "make this more functional". For general typing questions use
+  typescript-best-practices.
 license: MIT
 metadata:
   author: mshindi-labs

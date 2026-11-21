@@ -1,0 +1,54 @@
+{
+  "skill_name": "no-comments",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Clean up the comments in this branch's diff. The repo is at the path given in the fixture.",
+      "expected_output": "The scope is the diff against main: src/invoice.ts and src/webhook.ts. In it, the narration comment, the commented-out line and the HACK comment are deleted, and the HACK is not shortened into a smaller excuse; the double loadRates() call is flagged or fixed as the real problem. The licence header, the doc comment on the exported invoiceTotal, the vendor comment about the raw webhook body and // prettier-ignore stay. The eslint-disable for no-floating-promises is reported as a suppression of a correctness rule that needs a real fix. The \"do not remove\" constraint about discounts before tax gets an offer to encode it as a test, type or lint; with no approval given, the comment is deleted and the constraint is reported open. src/legacy.ts is not touched. The report gives a deletion count and lists what is still open.",
+      "files": [
+        "skills/no-comments/evals/fixtures/comment-mix/"
+      ],
+      "assertions": [
+        "Deletes the narration comment \"loop over the lines and add them up\" and the commented-out line \"total += line.price * line.qty * 1.2\" from src/invoice.ts",
+        "Deletes the whole HACK comment about loadRates() and does not replace it with a shorter comment that makes the same excuse",
+        "Treats the double loadRates() call as the thing to fix or flag (a surprise in our own code): either fixes it at its cause or reports it as open work naming loadRates, and does not leave the workaround in place unremarked",
+        "Keeps the licence header and the doc comment on the exported invoiceTotal function in src/invoice.ts",
+        "Keeps the comment in src/webhook.ts about the vendor signing the raw request body, and keeps // prettier-ignore",
+        "Reports the `eslint-disable-next-line @typescript-eslint/no-floating-promises` suppression as one that hides a real correctness problem (the dropped promise from recordEvent), not as an acceptable style suppression",
+        "For the \"do not remove\" comment, offers the cheapest way to enforce the constraint in code (a test, a type or a lint) and does not build that encoding without approval; the comment is deleted and the constraint is listed as unenforced or open",
+        "Leaves src/legacy.ts exactly as it was (`git diff main -- src/legacy.ts` is empty), although it is full of narration comments, because it is outside the diff",
+        "The final report includes a deletion count and separate entries for the encoding offer and the open work"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run no-comments on this branch's diff. I pre-approve encoding any constraint comment you find as a test: go ahead and write it, don't stop to ask. The repo is at the path given in the fixture.",
+      "expected_output": "The same hunt as before, but the \"do not remove\" constraint is encoded, because the caller approved it up front. A test now fails if tax is applied before discounts (for example an invoiceTotal case whose expected value only holds when the discount comes off first), and the comment is deleted. The report lists the encoding as done, not as an offer, and the rest of the keep and delete decisions are unchanged. src/legacy.ts is still untouched.",
+      "files": [
+        "skills/no-comments/evals/fixtures/comment-mix/"
+      ],
+      "assertions": [
+        "Adds a test that pins the constraint the comment claimed: with a discount on a line, the expected total is only right when discounts are subtracted before tax is added",
+        "Deletes the \"do not remove\" comment after encoding it",
+        "Reports the encoding as done, and does not stop to ask for approval that the prompt already gave",
+        "Encodes only the constraint comment: it does not use the pre-approval as licence to write tests for unrelated behaviour or to refactor outside the diff",
+        "Still keeps the licence header, the public doc comment, the vendor raw-body comment and // prettier-ignore",
+        "Still leaves src/legacy.ts untouched (`git diff main -- src/legacy.ts` is empty)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "no comments pass on this file please, it's the whole diff:\n\n```ts\n// src/session/session-store.ts\nimport { redis } from '../infra/redis';\n\n// IMPORTANT: do not touch this function. It took three weeks to get right and every\n// time someone changes it sessions break in production. The ordering of the calls\n// matters for reasons that are hard to explain. If you think you need to change it,\n// you don't. Too risky.\nexport async function rotateSession(userId: string, oldId: string): Promise<string> {\n  const newId = crypto.randomUUID();\n  await redis.set(`session:${newId}`, userId, 'EX', 3600);\n  await redis.del(`session:${oldId}`);\n  return newId;\n}\n\nexport function sessionTtlSeconds(raw: unknown): number {\n  // @ts-ignore\n  return raw.ttl * 60;\n}\n\n// Redis EXPIRE takes whole seconds; a fractional value is rejected with\n// \"ERR value is not an integer or out of range\". https://redis.io/commands/expire\nexport async function touch(id: string, seconds: number): Promise<void> {\n  await redis.expire(`session:${id}`, Math.ceil(seconds));\n}\n```",
+      "expected_output": "The long IMPORTANT block is deleted outright, not trimmed to a one-line warning: it is a justification about our own code with no proven exception behind it. rotateSession is marked MUST KILL (or the equivalent flag) with a one-line statement of what would make the ordering obvious without prose, such as a test that pins set-before-del. The @ts-ignore is deleted or flagged MUST KILL on sessionTtlSeconds, because it hides a real type error (raw is unknown). The Redis comment stays: it describes behaviour of an external system we cannot change and links its docs. Application code is not rewritten in the hunt itself beyond what the accepted flags call for.",
+      "files": [],
+      "assertions": [
+        "Deletes the entire IMPORTANT comment block above rotateSession and does not leave a shortened version of it (no one-line \"do not change\" or \"order matters\" comment in its place)",
+        "Flags rotateSession by name as the symbol that needs a real fix (the skill's MUST KILL flag or a clearly equivalent one), with one line on what would make the call order explicit, such as a test or a reshape",
+        "Does not treat \"too risky\" or \"took three weeks\" as proof: says the claim is not established by the code shown",
+        "Removes or flags the @ts-ignore in sessionTtlSeconds as hiding a real type error (property access on unknown), naming the function",
+        "Keeps the comment about Redis EXPIRE taking whole seconds, because it is forced by an external system and carries a link",
+        "Reports the deletion count and the flags, each flag in one line"
+      ]
+    }
+  ]
+}
