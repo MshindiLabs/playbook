@@ -1,6 +1,6 @@
 # TypeScript patterns
 
-Code examples for each rule in `SKILL.md`. The underlying principles are language-agnostic. See [type-system-discipline](../../rigor-mode/principles/type-system-discipline.md) and [boundary-discipline](../../rigor-mode/principles/boundary-discipline.md) when `rigor-mode` is installed.
+Code examples for each rule in `SKILL.md`. The underlying principles are language-agnostic. Make the compiler reject impossible states, mismatched primitives and unhandled variants ([type-system-discipline](../../rigor-mode/principles/type-system-discipline.md)). Validate where data crosses a system boundary and trust the types inside ([boundary-discipline](../../rigor-mode/principles/boundary-discipline.md)). See both when `rigor-mode` is installed.
 
 ## Branded types
 
