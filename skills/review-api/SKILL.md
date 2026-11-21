@@ -2,13 +2,11 @@
 name: review-api
 description: >
   Review a diff or a set of endpoints for API shape: list envelopes, route
-  naming, validation at the HTTP boundary, bounded selector endpoints, error
-  shape and per-operation DTOs. Use before merging a change that adds or edits
-  endpoints. Trigger on "review the API shape of this PR", "are my list
-  endpoints consistent", "check the routes in this controller", or "does this
-  endpoint follow our API conventions". Not for auth, query performance or a
-  general review; use the `review-auth`, `check-query-safety` or
-  `review-changes` skill.
+  naming, validation at the HTTP boundary and bounded selector endpoints. Use
+  before merging a change that adds or edits endpoints. Trigger on "review the
+  API shape of this PR", "are my list endpoints consistent", or "check the
+  routes in this controller". Not for auth, query cost or a general review;
+  use the `review-auth`, `check-query-safety` or `review-changes` skill.
 ---
 
 # review-api
@@ -44,7 +42,7 @@ Defaults, when no convention is found:
 Defaults, when no convention is found:
 
 - Routes are named after resources, in one shape across the whole API. Find the shape from existing routes and report the route that does not match it.
-- No bare `:id`. The path parameter names the resource, such as `:order_id`, so a nested route can carry two of them without ambiguity.
+- Path parameters are named after their resource (such as `:order_id`) rather than a bare `:id`, so a nested route can carry two of them without ambiguity. This is a default: a documented different style wins.
 - Auth routes (login, logout, token refresh, password reset) are exempt from the resource pattern. Do not report them.
 
 ## Step 5 — Selector endpoints
@@ -60,7 +58,7 @@ A selector feeds a dropdown or a picker that must show every option. It may retu
 
 - Validation happens once, at the HTTP boundary: a typed input class with validation rules, and a global pipe or middleware that rejects or strips unknown fields.
 - Report validation repeated behind that boundary: `typeof` checks, hand-written range checks or schema parsing inside a service or repository that the input type already covers. The layers behind the boundary trust their input.
-- Report a mutating handler that reads the raw body, query or params without going through the typed input.
+- Report a handler that reads the raw body, query or params without going through the typed input, and any hand-written parsing of raw input in a controller.
 - Report business logic in the HTTP layer. The controller or gateway maps a request to a call and a result to a response.
 
 ## Step 7 — Errors and DTOs
@@ -72,7 +70,8 @@ A selector feeds a dropdown or a picker that must show every option. It may retu
 
 Do not judge these here. Name the finding in one line and point to the sibling skill:
 
-- An N+1 query, an unbounded query or an over-fetch inside a handler goes to the `check-query-safety` skill.
+- The cost of a query inside a handler (an N+1 loop, a missing index, an over-fetch) goes to the `check-query-safety` skill. A list that returns every row with no bound is still reported here, as a shape finding (Step 3); only the query behind it is handed off.
+- A hand-off is one line under "Handed off", with no severity and no fix of its own.
 - A missing authentication check, a missing ownership check or an IDOR goes to the `review-auth` skill.
 - Anything outside API shape goes to the `review-changes` skill.
 
@@ -81,7 +80,7 @@ Do not judge these here. Name the finding in one line and point to the sibling s
 ```text
 API review findings
 ──────────────────────────────────────────────────
-Convention used: <documented in path | observed in path | defaults: none found>
+Convention used, per rule: <lists: documented in path | routes: observed in path | validation: defaults (none found)>
 
 1. [high] <title> — `path/to/file:line`
    <what breaks the shape, and the rule it breaks>
@@ -103,8 +102,8 @@ Summary
 
 Severity:
 
-- **High:** an unbounded list, a mutating endpoint that bypasses the typed input, or a list whose envelope differs from every other list.
-- **Medium:** a bare `:id`, a re-declared pagination parameter, validation repeated behind the boundary.
-- **Low:** an unusual error shape, a reused create type, a naming inconsistency.
+- **High:** an unbounded list, a handler that bypasses the typed input, or a list whose envelope differs from every other list.
+- **Medium:** a bare `:id`, a re-declared pagination parameter, validation repeated behind the boundary, business logic or data access in the HTTP layer, a selector with no bound.
+- **Low:** an unusual error shape, a reused create type, a handler that returns a database entity directly, a route whose shape differs from the rest of the API, a naming inconsistency.
 
 If a finding depends on a convention you could not confirm, report it as a question and say what you would need to see. Do not report endpoints that follow the convention you found, even when you would have designed them differently.

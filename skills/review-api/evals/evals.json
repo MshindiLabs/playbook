@@ -25,7 +25,7 @@
         "Does not flag POST /auth/login for being off the resource route pattern, since auth routes are exempt - restraint / false-positive check",
         "Flags the manual name and price checks in ProductsService.create (src/products/products.service.ts) as validation repeated behind the HTTP boundary, where the DTO and ValidationPipe already validate",
         "Proposes removing the duplicate checks from the service and putting any missing rule (such as the price minimum) on CreateProductDto",
-        "Names docs/api.md as the convention it applied instead of presenting its own defaults",
+        "Names docs/api.md as the source for the list, auth-route and selector rules it applied, instead of presenting its own defaults as the team's rules",
         "Assigns a severity to the finding and uses the skill's numbered report structure"
       ]
     },
@@ -37,7 +37,8 @@
       "assertions": [
         "Flags the bare :id route on OrdersController.get (src/orders/orders.controller.ts) and proposes a resource-named parameter such as :order_id",
         "Does not flag the list envelope, since it matches the documented data and meta shape - restraint / false-positive check",
-        "Does not diagnose the one-query-per-order loop as an N+1 problem itself; it hands that to the check-query-safety skill with a pointer",
+        "The one-query-per-order loop appears only under 'Handed off' as a single line pointing to the check-query-safety skill, with no severity and no fix of its own",
+        "Reports the direct customer query in the controller (this.db.customer.findUnique) as data access in the HTTP layer, a shape finding, while its N+1 cost is the part that is handed off",
         "Does not report missing authentication or ownership checks as findings of its own; if it mentions them, it points to the review-auth skill",
         "Uses the skill's numbered, severity-tagged report structure"
       ]

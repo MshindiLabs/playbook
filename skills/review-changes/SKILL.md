@@ -6,7 +6,7 @@ description: >
   integrity — before style or nits. Trigger on "review my changes", "review
   this diff", "review this PR", "can you look over what I changed", or
   "sanity check this before I push". This is the generalist reviewer: it
-  flags auth, migration, and query issues it notices but does not go deep.
+  flags auth, migration, query and API-shape issues it notices but does not go deep.
   For dedicated depth, use review-auth for authentication and authorization,
   review-migration for schema changes, check-query-safety for database
   queries, and review-api for endpoint and list shape.

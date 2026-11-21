@@ -180,7 +180,7 @@ Naming a skill directly (`use review-auth on this file`) works too, and is worth
 when you want the deep pass rather than whatever the agent judged to be closest.
 
 **Related skills know their boundaries.** `review-changes` is the generalist: it
-flags auth, migration, and query issues in passing and then hands the deep pass to
+flags auth, migration, query, and API-shape issues in passing and then hands the deep pass to
 `review-auth`, `review-migration`, `check-query-safety`, or `review-api`. Each skill's description
 says what it owns and which sibling to prefer, so overlapping requests land in the
 right place instead of the first match.
