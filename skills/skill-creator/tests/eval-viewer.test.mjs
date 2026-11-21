@@ -56,16 +56,16 @@ describe('generate_review.py --static', () => {
   });
 });
 
-function send({ port, method = 'GET', path = '/', headers = {}, body }) {
+function send({ host = '127.0.0.1', port, method = 'GET', path = '/', headers = {}, body }) {
   const length = body === undefined ? {} : { 'Content-Length': Buffer.byteLength(body) };
   return new Promise((done, fail) => {
     const req = request(
       {
-        host: '127.0.0.1',
+        host,
         port,
         method,
         path,
-        headers: { Host: `127.0.0.1:${port}`, ...length, ...headers },
+        headers: { Host: `${host}:${port}`, ...length, ...headers },
       },
       (res) => {
         let text = '';
@@ -279,7 +279,7 @@ async function startIpv6Holder(port, stops) {
     [
       '-e',
       `const s = require('node:net').createServer((c) => c.end('HTTP/1.1 418 holder\\r\\n\\r\\n'));
-       s.on('error', () => { console.log('unavailable'); process.exit(0); });
+       s.on('error', (e) => { console.log('error ' + e.code); process.exit(0); });
        s.listen({ port: ${port}, host: '::1', ipv6Only: true }, () => console.log('listening'));`,
     ],
     { stdio: ['ignore', 'pipe', 'inherit'] },
@@ -287,9 +287,13 @@ async function startIpv6Holder(port, stops) {
   stops.push(child);
   const state = await new Promise((done) => {
     child.stdout.once('data', (chunk) => done(String(chunk).trim()));
-    child.once('exit', () => done('unavailable'));
+    child.once('exit', () => done('error EXITED'));
   });
-  return state === 'listening' ? child : null;
+  if (state === 'listening') return child;
+  // Only a machine without IPv6 loopback skips; anything else (the port already held on [::1])
+  // is a real failure to report, not a reason to skip.
+  if (state === 'error EADDRNOTAVAIL' || state === 'error EAFNOSUPPORT') return null;
+  throw new Error(`could not hold [::1]:${port}: ${state}`);
 }
 
 /**
@@ -332,9 +336,9 @@ function freePort() {
   });
 }
 
-function canConnect(port) {
+function canConnect(port, host = '127.0.0.1') {
   return new Promise((done) => {
-    const socket = connect(port, '127.0.0.1');
+    const socket = connect(port, host);
     socket.once('connect', () => {
       socket.destroy();
       done(true);
@@ -379,10 +383,12 @@ describe('the review server when its port is taken', () => {
 
     assert.equal(viewer.host, '127.0.0.1', `printed: ${viewer.stdout()}`);
     assert.equal(viewer.port, port);
-    const page = await send({ port });
+    const page = await send({ host: viewer.host, port: viewer.port });
     assert.equal(page.status, 200);
     assert.ok(page.text.includes('EMBEDDED_DATA'), 'the printed address did not reach the viewer');
     assert.equal(holder.exitCode, null, 'the [::1] holder exited');
+    assert.equal(holder.signalCode, null, `the [::1] holder was sent ${holder.signalCode}`);
+    assert.ok(await canConnect(port, '::1'), 'the [::1] holder no longer accepts connections');
   });
 
   it('binds the requested port, with no notice, when it is free', async () => {
