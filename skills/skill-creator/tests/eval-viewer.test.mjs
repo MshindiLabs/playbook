@@ -13,6 +13,8 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 
 const viewerDir = resolve(import.meta.dirname, '../eval-viewer');
+/** The viewer's 'URL:' line; group 1 is the host, group 2 the port. */
+const URL_LINE = /URL:\s+http:\/\/(localhost|127\.0\.0\.1):(\d+)/;
 const script = join(viewerDir, 'generate_review.py');
 const HOSTILE = '</script><img src=x onerror="alert(1)">';
 const QUOTE_BREAK = '" onmouseover="alert(2)';
@@ -94,8 +96,8 @@ describe('the review server', () => {
       let out = '';
       server.stdout.on('data', (chunk) => {
         out += chunk;
-        const match = out.match(/URL:\s+http:\/\/localhost:(\d+)/);
-        if (match) done(Number(match[1]));
+        const match = out.match(URL_LINE);
+        if (match) done(Number(match[2]));
       });
       server.on('exit', (code) => fail(new Error(`server exited with ${code}`)));
     });
@@ -268,6 +270,29 @@ async function startHolder(stops) {
 }
 
 /**
+ * Start a separate process listening on IPv6 loopback `[::1]:port` only. Resolves with the child, or
+ * null when this machine has no IPv6 loopback (the test then skips).
+ */
+async function startIpv6Holder(port, stops) {
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      `const s = require('node:net').createServer((c) => c.end('HTTP/1.1 418 holder\\r\\n\\r\\n'));
+       s.on('error', () => { console.log('unavailable'); process.exit(0); });
+       s.listen({ port: ${port}, host: '::1', ipv6Only: true }, () => console.log('listening'));`,
+    ],
+    { stdio: ['ignore', 'pipe', 'inherit'] },
+  );
+  stops.push(child);
+  const state = await new Promise((done) => {
+    child.stdout.once('data', (chunk) => done(String(chunk).trim()));
+    child.once('exit', () => done('unavailable'));
+  });
+  return state === 'listening' ? child : null;
+}
+
+/**
  * Start the viewer on `port` and wait for its URL line. Resolves with the bound port and stdout.
  * The child goes into `stops` as soon as it exists, so a viewer that never prints its URL (the
  * 10 s timeout below) is still killed by the caller's cleanup.
@@ -278,14 +303,14 @@ async function startViewer(ws, port, stops) {
   });
   stops.push(child);
   let out = '';
-  const boundPort = await new Promise((done, fail) => {
+  const bound = await new Promise((done, fail) => {
     const timer = setTimeout(() => fail(new Error(`no URL line from the viewer: ${out}`)), 10_000);
     child.stdout.on('data', (chunk) => {
       out += chunk;
-      const match = out.match(/URL:\s+http:\/\/localhost:(\d+)/);
+      const match = out.match(URL_LINE);
       if (match) {
         clearTimeout(timer);
-        done(Number(match[1]));
+        done({ host: match[1], port: Number(match[2]) });
       }
     });
     child.once('exit', (code) => {
@@ -293,7 +318,7 @@ async function startViewer(ws, port, stops) {
       fail(new Error(`viewer exited with ${code}: ${out}`));
     });
   });
-  return { child, port: boundPort, stdout: () => out };
+  return { child, host: bound.host, port: bound.port, stdout: () => out };
 }
 
 function freePort() {
@@ -341,6 +366,23 @@ describe('the review server when its port is taken', () => {
     assert.equal(holder.child.exitCode, null, 'the holder exited');
     assert.equal(holder.child.signalCode, null, `the holder was sent ${holder.child.signalCode}`);
     assert.ok(await canConnect(holder.port), 'the holder no longer accepts connections');
+  });
+
+  it('prints and opens the address it owns, so a process on [::1] with the same port is not reached', async (t) => {
+    const port = await freePort();
+    const holder = await startIpv6Holder(port, stops);
+    if (holder === null) {
+      t.skip('no IPv6 loopback on this machine');
+      return;
+    }
+    const viewer = await startViewer(ws, port, stops);
+
+    assert.equal(viewer.host, '127.0.0.1', `printed: ${viewer.stdout()}`);
+    assert.equal(viewer.port, port);
+    const page = await send({ port });
+    assert.equal(page.status, 200);
+    assert.ok(page.text.includes('EMBEDDED_DATA'), 'the printed address did not reach the viewer');
+    assert.equal(holder.exitCode, null, 'the [::1] holder exited');
   });
 
   it('binds the requested port, with no notice, when it is free', async () => {

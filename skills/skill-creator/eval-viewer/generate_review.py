@@ -12,8 +12,9 @@ Usage:
 No dependencies beyond the Python stdlib are required.
 
 Modified from the upstream skill-creator (Apache-2.0): script-safe embedded JSON, Host, Origin,
-content-type and per-run token checks on the server, and a busy port falls back to a free one
-instead of stopping the process listening on it. See ../LOCAL-CHANGES.md.
+content-type and per-run token checks on the server, a busy port falls back to a free one
+instead of stopping the process listening on it, and the printed URL is the bound 127.0.0.1
+address. See ../LOCAL-CHANGES.md.
 """
 
 import argparse
@@ -514,7 +515,9 @@ def main() -> None:
     # The port actually bound (differs from --port when that was 0 or taken).
     port = server.server_address[1]
 
-    url = f"http://localhost:{port}"
+    # The address it bound, not `localhost`: that name can resolve to ::1 first, where another
+    # process may hold the same port number without conflicting with this bind.
+    url = f"http://127.0.0.1:{port}"
     print(f"\n  Eval Viewer")
     print(f"  ─────────────────────────────────")
     print(f"  URL:       {url}")
