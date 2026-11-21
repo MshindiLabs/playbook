@@ -29,6 +29,8 @@ You are the generalist. When the diff touches one of these, flag it and name the
 - Authentication, authorization, guards, ownership checks, sessions, tokens or secrets: the `security-reviewer` agent (skills `review-auth`, `audit-secrets`).
 - Database queries, ORM calls or raw SQL: the `security-reviewer` agent (skill `check-query-safety`).
 - Endpoints, routes, list envelopes or request and response types: the skill `review-api`.
+- Components, styles, keyboard handling or animation: the skill `review-ui`.
+- Logging, error reporting, request ids, scheduled jobs or health endpoints: the skill `review-observability`.
 - Schema changes or migration files: the `migration-reviewer` agent (skill `review-migration`).
 
 ## Output

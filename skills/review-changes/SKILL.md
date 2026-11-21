@@ -6,10 +6,11 @@ description: >
   integrity — before style or nits. Trigger on "review my changes", "review
   this diff", "review this PR", "can you look over what I changed", or
   "sanity check this before I push". This is the generalist reviewer: it
-  flags auth, migration, query and API-shape issues it notices but does not go deep.
+  flags auth, migration, query, API-shape, UI and observability issues it notices but does not go deep.
   For dedicated depth, use review-auth for authentication and authorization,
   review-migration for schema changes, check-query-safety for database
-  queries, and review-api for endpoint and list shape.
+  queries, review-api for endpoint and list shape, review-ui for UI code, and
+  review-observability for logs, error reporting and health checks.
 ---
 
 # review-changes
@@ -102,6 +103,8 @@ review — do not attempt the exhaustive audit yourself:
 | schema migrations                            | `review-migration`        |
 | database queries                             | `check-query-safety`      |
 | endpoints, routes, list envelopes, DTOs      | `review-api`              |
+| components, styles, keyboard, motion         | `review-ui`               |
+| logging, error reporting, request ids, health | `review-observability`   |
 | credentials or secrets appearing in the diff | `audit-secrets`           |
 
 The handoff is part of the finding, not a substitute for it. "Auth changed, get it
