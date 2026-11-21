@@ -1,0 +1,45 @@
+{
+  "skill_name": "review-ui",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the UI in this PR before I merge it.\n\n```tsx\n// src/components/invite-panel.tsx\nexport function InvitePanel({ invites, onRevoke }: Props) {\n  return (\n    <div className=\"bg-zinc-900 text-gray-400 p-4 rounded-lg animate-bounce\">\n      <h2 style={{ color: '#e11d48' }}>Pending invites</h2>\n      {invites.map((invite) => (\n        <div key={invite.id} className=\"flex justify-between\" onClick={() => onRevoke(invite.id)}>\n          <span>{invite.email}</span>\n          <button className=\"outline-none\"><TrashIcon /></button>\n        </div>\n      ))}\n    </div>\n  );\n}\n```\n\nThere is no design-system doc in this repo. Other components in src/components build from Button and Card primitives in src/ui and use classes like bg-card and text-muted-foreground.",
+      "expected_output": "A findings report that flags the raw colours (bg-zinc-900, text-gray-400 and the inline hex colour) against the token convention observed in the other components, flags the click-only revoke row and the icon-only button with no accessible name and no focus outline, assigns the keyboard and accessibility findings higher severity than the colour findings, says the convention was observed from existing components, and proposes concrete fixes.",
+      "files": [],
+      "assertions": [
+        "Flags the raw colours in src/components/invite-panel.tsx (bg-zinc-900, text-gray-400 and the inline style colour #e11d48) as bypassing the semantic tokens used by the other components",
+        "Flags the revoke row as click-only: a div with onClick that cannot be reached or operated with the keyboard, and proposes a real button or the right role and key handling",
+        "Flags the icon-only trash button as having no accessible name and as removing the focus outline (outline-none) without a replacement",
+        "Assigns high severity to the keyboard and accessibility findings (the click-only row, the unnamed icon button) and no higher than medium to the raw colours, following the skill's severity mapping",
+        "States that no design system is documented and that the convention was observed from existing components (Button, Card, bg-card, text-muted-foreground), instead of presenting its own defaults as the team's rules",
+        "Uses the skill's report structure: numbered, severity-tagged findings that cite the file and element, each with a concrete fix"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Check this component against our design system. docs/design-system.md says: colours come only from the surface, content and accent tokens (bg-surface, text-content-muted, border-line, divide-line, text-danger); use the Button and Dialog components from src/ui; every list handles loading, empty and error states; animations use the motion-safe: prefix.\n\n```tsx\n// src/components/member-list.tsx\nexport function MemberList({ query }: { query: MembersQuery }) {\n  const { data, isLoading, error } = query;\n  if (isLoading) return <Skeleton rows={3} />;\n  if (error) return <p className=\"text-danger\">Could not load members.</p>;\n  if (data.length === 0) return <p className=\"text-content-muted\">No members yet.</p>;\n  return (\n    <ul className=\"divide-y divide-line bg-surface motion-safe:animate-fade-in dark:bg-slate-800\">\n      {data.map((member) => (\n        <li key={member.id} className=\"flex items-center justify-between p-3\">\n          <span>{member.name}</span>\n          <Button variant=\"ghost\" onClick={() => removeMember(member.id)}>Remove</Button>\n        </li>\n      ))}\n    </ul>\n  );\n}\n```",
+      "expected_output": "A findings report that accepts bg-surface, text-content-muted, divide-line and text-danger as the documented tokens, does not flag the loading, empty and error states, the Button primitive or the motion-safe animation, and reports the hard-coded dark:bg-slate-800 as a dark-mode variant that bypasses the token. It names docs/design-system.md as the source of the rules.",
+      "files": [],
+      "assertions": [
+        "Does not flag bg-surface, text-content-muted, divide-line or text-danger as non-standard colours, since docs/design-system.md documents them as the tokens - restraint / false-positive check",
+        "Does not flag the loading, empty and error states or the Button component, which follow the documented rules - restraint / false-positive check",
+        "Does not flag motion-safe:animate-fade-in as missing reduced-motion handling, since the documented motion-safe: prefix is used",
+        "Flags dark:bg-slate-800 in src/components/member-list.tsx as a hard-coded dark-mode colour that bypasses the token, and proposes removing it or using the surface token",
+        "Names docs/design-system.md as the source of the rules it applied",
+        "Assigns a severity to the finding and uses the skill's numbered report structure"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you review this page, and also tell me how we should redesign it so it looks more modern?\n\n```tsx\n// src/pages/team.tsx\nexport default function TeamPage({ members }: { members: Member[] }) {\n  return (\n    <main className=\"bg-background\">\n      <h1 className=\"text-foreground\">Team</h1>\n      {members.map((member) => (\n        <div key={member.id} className=\"text-muted-foreground\" onClick={() => router.push('/team/' + member.id)}>\n          {member.name}\n        </div>\n      ))}\n    </main>\n  );\n}\n```\n\nThe existing pages use bg-background and text-foreground tokens, Link from the framework for internal navigation, and a Button primitive for actions.",
+      "expected_output": "A findings report that reports the click-only member row (a div with onClick and router.push instead of a link) as a keyboard and navigation finding, accepts the token usage, and does not write a redesign itself: the redesign request is handed to the draft-ui-redesign skill in one line.",
+      "files": [],
+      "assertions": [
+        "Flags the member row in src/pages/team.tsx as click-only navigation: a div with onClick and router.push, with no keyboard path, where the framework's link component should be used for an internal route",
+        "Does not flag bg-background, text-foreground or text-muted-foreground, since they match the tokens the existing pages use - restraint / false-positive check",
+        "Does not write a redesign or visual direction itself; the redesign request appears only under 'Handed off' as a single line pointing to the draft-ui-redesign skill, with no severity and no fix of its own",
+        "Uses the skill's numbered, severity-tagged report structure for the keyboard finding"
+      ]
+    }
+  ]
+}

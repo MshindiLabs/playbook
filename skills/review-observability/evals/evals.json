@@ -1,0 +1,45 @@
+{
+  "skill_name": "review-observability",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the logging and error handling in this PR before I merge it.\n\n```typescript\n// src/payments/payments.controller.ts\nrouter.post('/payments', async (req, res) => {\n  console.log(`payment from ${req.body.email} with card ${req.body.card} headers ${JSON.stringify(req.headers)}`);\n  const result = await fetch(BILLING_URL + '/charge', { method: 'POST', body: JSON.stringify(req.body) });\n  res.json(await result.json());\n});\n\n// src/app.ts\napp.use((err, req, res, next) => {\n  Sentry.captureException(err);\n  res.status(err.status ?? 500).json({ message: err.message });\n});\n\n// src/health.ts\nrouter.get('/health', (req, res) => res.status(200).send('ok'));\n```\n\nNo logging convention is documented. The other handlers in src/ write through logger.info({ requestId: req.id, ... }) from src/lib/logger and call billingClient(req) for service calls.",
+      "expected_output": "A findings report that flags the console.log that writes the card number and all request headers, flags the billing fetch that does not use the observed request-id-propagating client, flags the catch-all handler that reports client errors to the tracker, ranks the sensitive-data and dropped-request-id findings high, says the convention was observed from existing handlers, and proposes concrete fixes.",
+      "files": [],
+      "assertions": [
+        "Flags the console.log in src/payments/payments.controller.ts as unstructured and as writing sensitive data (the card number and the request headers), citing the line, and proposes the project logger with only safe fields",
+        "Flags the fetch to the billing service as dropping the request id, since the other handlers use billingClient(req), and proposes using it",
+        "Flags the error middleware in src/app.ts for sending every error to the tracker, including client errors, and proposes reporting only unexpected and server errors",
+        "Assigns high severity to the sensitive data in the log and to the dropped request id, following the skill's severity mapping",
+        "States that no logging convention is documented and that the convention was observed from the other handlers (logger.info with requestId, billingClient), instead of presenting its own defaults as the team's rules",
+        "Uses the skill's report structure: numbered, severity-tagged findings that cite the file and call, each with a concrete fix"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Check this change against our observability doc. docs/observability.md says: log through log() from src/lib/log, which writes one JSON line and scrubs known secrets; call downstream services only through callService(req, ...), which carries the request id; report errors with reportError() for 5xx and unexpected throws only, never 4xx; /health returns 200 when every dependency answered and 503 otherwise, with a body of up, down or unknown. The inventory service does not report its own errors to the tracker, so the caller reports them.\n\n```typescript\n// src/orders/orders.handler.ts\nexport async function createOrder(req: Request, res: Response) {\n  const parsed = orderSchema.safeParse(req.body);\n  if (!parsed.success) {\n    return res.status(400).json({ message: 'invalid order' });\n  }\n  try {\n    const stock = await callService(req, 'inventory', '/reserve', parsed.data);\n    log(req).info({ context: 'orders', message: 'order created', orderId: stock.orderId });\n    return res.status(201).json(stock);\n  } catch (err) {\n    log(req).error({ context: 'orders', message: 'reserve failed', authorization: req.headers.authorization, stack: err.stack });\n    reportError(req, err);\n    return res.status(502).json({ message: 'inventory unavailable' });\n  }\n}\n\n// src/health.ts\nrouter.get('/health', async (req, res) => {\n  const ok = await db.ping().then(() => true, () => false);\n  res.status(ok ? 200 : 503).json({ status: ok ? 'up' : 'down' });\n});\n```",
+      "expected_output": "A findings report that accepts the structured logging through log(), the callService request-id propagation, the 400 that is not reported and the 503 health body as documented, and reports the authorization header value written to the error log line as sensitive data that bypasses the scrubber. It names docs/observability.md as the source of the rules.",
+      "files": [],
+      "assertions": [
+        "Does not flag the 400 response for invalid input as unreported, since the documented rule is to report 5xx and unexpected throws only - restraint / false-positive check",
+        "Does not flag callService(req, ...) or log(req) as missing request-id propagation or structure, since they are the documented helpers - restraint / false-positive check",
+        "Does not flag /health for returning 503 with a body of down, since that is the documented behaviour - restraint / false-positive check",
+        "Flags the authorization header value (authorization: req.headers.authorization) in the error log line in src/orders/orders.handler.ts as sensitive data written to a log, and proposes removing the field",
+        "Names docs/observability.md as the source of the rules it applied",
+        "Assigns a severity to the finding and uses the skill's numbered report structure"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We are being paged right now for 500s on /checkout since this change went out. Can you review the logging in the diff, and tell me what is wrong in production?\n\n```typescript\n// src/checkout/checkout.handler.ts\nexport async function checkout(req: Request, res: Response) {\n  try {\n    const total = await priceCart(req.body.cartId);\n    res.json({ total });\n  } catch (e) {\n    console.error('checkout failed ' + e);\n    res.status(500).json({ message: 'error' });\n  }\n}\n```\n\nThe project logs through log(req) from src/lib/log in every other handler.",
+      "expected_output": "A findings report that reports the unstructured console.error with no request id and no stack, and the 500 that is never sent to the error tracker, as observability findings, and hands the live incident (what is wrong in production right now) to the triage-error skill in one line instead of diagnosing it.",
+      "files": [],
+      "assertions": [
+        "Flags the console.error string in src/checkout/checkout.handler.ts as an unstructured log line with no request id and no stack, where every other handler uses log(req)",
+        "Notes that the 500 is not reported to the error tracker, so the failure leaves no trace beyond a console line",
+        "Does not diagnose the production 500s itself; the live incident appears only under 'Handed off' as a single line pointing to the triage-error skill, with no severity and no fix of its own",
+        "Uses the skill's numbered, severity-tagged report structure for the logging findings"
+      ]
+    }
+  ]
+}
