@@ -1,0 +1,42 @@
+[
+  {
+    "query": "review the API shape of this PR before I merge it",
+    "should_trigger": true
+  },
+  {
+    "query": "are my list endpoints consistent with each other?",
+    "should_trigger": true
+  },
+  {
+    "query": "check the routes and response envelopes in this controller",
+    "should_trigger": true
+  },
+  {
+    "query": "is this selector endpoint fine to return a bare array?",
+    "should_trigger": true
+  },
+  {
+    "query": "does this new endpoint follow our API conventions",
+    "should_trigger": true
+  },
+  {
+    "query": "is this endpoint protected against users reading each other's orders",
+    "should_trigger": false
+  },
+  {
+    "query": "will this list query scale, I think it loops over every row",
+    "should_trigger": false
+  },
+  {
+    "query": "review my changes before I push",
+    "should_trigger": false
+  },
+  {
+    "query": "scaffold a new feature with a controller, service and tests",
+    "should_trigger": false
+  },
+  {
+    "query": "write the OpenAPI docs for this endpoint",
+    "should_trigger": false
+  }
+]

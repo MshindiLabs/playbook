@@ -1,0 +1,47 @@
+{
+  "skill_name": "review-api",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the API shape of this contacts and tags change before I merge it.\n\n```typescript\n// src/contacts/contacts.controller.ts\n@Controller('contacts')\nexport class ContactsController {\n  constructor(private readonly contacts: ContactsService) {}\n\n  // GET /contacts\n  @Get()\n  async list() {\n    return this.contacts.findAll();\n  }\n\n  // GET /contacts/:id\n  @Get(':id')\n  async get(@Param('id') id: string) {\n    return this.contacts.findOne(id);\n  }\n}\n\n// src/tags/tags.controller.ts\n@Controller('tags')\nexport class TagsController {\n  constructor(private readonly tags: TagsService) {}\n\n  // GET /tags?page=0&limit=50\n  @Get()\n  async list(@Query('page') page = 0, @Query('limit') limit = 50) {\n    const rows = await this.tags.find(page, limit);\n    return { items: rows, nextPage: page + 1 };\n  }\n}\n```\n\nThere is no API convention documented in this repo. The contacts service returns every row.",
+      "expected_output": "A findings report that flags ContactsController.list as an unbounded list returning a bare array, flags TagsController.list for a different list envelope and its own 0-indexed page and limit declaration, flags the bare :id route on contacts, says no documented convention was found so the stated defaults were used, and proposes concrete fixes.",
+      "files": [],
+      "assertions": [
+        "Flags ContactsController.list (src/contacts/contacts.controller.ts) as returning every row as a bare array with no server-side bound and no pagination",
+        "Flags the tags list as using a different envelope (items and nextPage) from a paginated list that carries the rows and a total count, and as declaring its own page and limit parameters inside the controller",
+        "Flags the 0-indexed page default on the tags list as a problem, since pages are 1-indexed by default",
+        "Flags the bare :id route on contacts and proposes a resource-named parameter such as :contact_id",
+        "States that no API convention is documented in the repo and that the findings use the stated defaults, instead of presenting the defaults as the team's rules",
+        "Uses the skill's report structure: numbered, severity-tagged findings that cite the file and handler, each with a concrete fix"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Can you check the API shape of this diff? Our API reference (docs/api.md) says: lists return a paginated envelope, auth routes live under /auth, and a selector endpoint may return a bare array when it carries a hard bound and a comment saying why.\n\n```typescript\n// src/countries/countries.controller.ts\n@Controller('countries')\nexport class CountriesController {\n  // Selector for the country dropdown: the full list is fixed at ~250 rows,\n  // so it is returned unpaginated. Bounded to MAX_SELECTOR_ROWS (500).\n  @Get('selector')\n  async selector() {\n    return this.countries.findAll({ take: MAX_SELECTOR_ROWS });\n  }\n}\n\n// src/auth/auth.controller.ts\n@Controller('auth')\nexport class AuthController {\n  @Post('login')\n  async login(@Body() dto: LoginDto) {\n    return this.auth.login(dto);\n  }\n}\n\n// src/products/products.service.ts\n@Injectable()\nexport class ProductsService {\n  async create(dto: CreateProductDto) {\n    if (typeof dto.name !== 'string' || dto.name.length === 0) {\n      throw new BadRequestException('name is required');\n    }\n    if (dto.price < 0) {\n      throw new BadRequestException('price must be positive');\n    }\n    return this.repo.insert(dto);\n  }\n}\n```\n\nThe products controller already declares CreateProductDto with class-validator decorators and a global ValidationPipe.",
+      "expected_output": "A findings report that does not flag the bounded, commented countries selector or the /auth/login route, and reports the repeated validation in ProductsService.create as a boundary violation: the checks duplicate what the DTO and ValidationPipe already do, in a layer that should trust its input. The report names docs/api.md as the source of the convention it applied.",
+      "files": [],
+      "assertions": [
+        "Does not flag the countries selector as an unbounded list, since it carries a hard take bound and a comment naming the bound and why it is a selector - restraint / false-positive check",
+        "Does not flag POST /auth/login for being off the resource route pattern, since auth routes are exempt - restraint / false-positive check",
+        "Flags the manual name and price checks in ProductsService.create (src/products/products.service.ts) as validation repeated behind the HTTP boundary, where the DTO and ValidationPipe already validate",
+        "Proposes removing the duplicate checks from the service and putting any missing rule (such as the price minimum) on CreateProductDto",
+        "Names docs/api.md as the source for the list, auth-route and selector rules it applied, instead of presenting its own defaults as the team's rules",
+        "Assigns a severity to the finding and uses the skill's numbered report structure"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review the API shape of this handler.\n\n```typescript\n// src/orders/orders.controller.ts\n@Controller('orders')\nexport class OrdersController {\n  // GET /orders\n  @Get()\n  async list(@Query() query: ListOrdersDto) {\n    const orders = await this.orders.findPage(query.page, query.size);\n    const rows = [];\n    for (const order of orders.data) {\n      // one query per order\n      const customer = await this.db.customer.findUnique({ where: { id: order.customerId } });\n      rows.push({ ...order, customerName: customer.name });\n    }\n    return { data: rows, meta: { page: query.page, pageSize: query.size, total: orders.total } };\n  }\n\n  // GET /orders/:id\n  @Get(':id')\n  async get(@Param('id') id: string) {\n    return this.orders.findOne(id);\n  }\n}\n```\n\nThe project documents list endpoints as returning an object with a data array and a meta object (page, pageSize, total).",
+      "expected_output": "A findings report that reports the bare :id route as an API shape problem, accepts the list envelope as matching the documented convention, and hands the query-per-order loop to the check-query-safety skill instead of judging it, with a one-line pointer.",
+      "files": [],
+      "assertions": [
+        "Flags the bare :id route on OrdersController.get (src/orders/orders.controller.ts) and proposes a resource-named parameter such as :order_id",
+        "Does not flag the list envelope, since it matches the documented data and meta shape - restraint / false-positive check",
+        "The one-query-per-order loop appears only under 'Handed off' as a single line pointing to the check-query-safety skill, with no severity and no fix of its own",
+        "Reports the direct customer query in the controller (this.db.customer.findUnique) as data access in the HTTP layer, a shape finding, while its N+1 cost is the part that is handed off",
+        "Does not report missing authentication or ownership checks as findings of its own; if it mentions them, it points to the review-auth skill",
+        "Uses the skill's numbered, severity-tagged report structure"
+      ]
+    }
+  ]
+}
