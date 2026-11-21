@@ -37,6 +37,8 @@ Read the core files to understand:
 - how roles or permissions are represented (string enum, bitmask, RBAC, ABAC)
 - how the auth layer passes identity information to handlers
 
+**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering sign-in that reveals which accounts exist, guard metadata and order, claims versus database roles, long-lived connections and shared caches. A documented convention still wins over them.
+
 ---
 
 ## Step 2 — Audit route and handler coverage

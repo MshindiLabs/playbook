@@ -23,6 +23,8 @@ Work out which rules apply, in this order, and keep a note of which source decid
 
 A change that follows a documented convention which differs from the defaults is correct. Do not report it.
 
+**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering validation pipes, status codes, exception filters, route order and serialization. A documented convention still wins over them.
+
 ## Step 2 — Map the endpoints
 
 For the diff or the target files, list each endpoint: method, path, handler, input type, return type. Note which are lists, which are mutations, and which are exempt from the resource pattern (see Step 4).

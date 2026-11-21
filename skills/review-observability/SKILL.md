@@ -25,6 +25,8 @@ Work out which rules apply, in this order, and keep a note of which source decid
 
 A change that follows a documented convention which differs from the defaults is correct. Do not report it.
 
+**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering configuration loading, scheduled and queued jobs, event listeners, shutdown and running behind a load balancer. A documented convention still wins over them.
+
 ## Step 2 — Map what changed
 
 List the handlers, jobs, outgoing calls (HTTP, RPC, queue publishes), error handling paths and health endpoints in the diff. For each, note what it logs, what it reports and what it passes on.

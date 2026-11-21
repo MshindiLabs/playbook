@@ -32,6 +32,8 @@ Look for imports of:
 - **database/sql**: Go stdlib
 - **Raw SQL**: template literals, `query()`, `execute()`, `db.raw()`
 
+**NestJS.** If the project uses NestJS (`@nestjs/core` in `package.json`), also apply the framework checks in [references/nestjs.md](references/nestjs.md), covering writes under concurrent requests, constraint violations, network calls inside transactions and values that come back as strings. A documented convention still wins over them.
+
 ---
 
 ## Step 2 — Check for SQL injection
