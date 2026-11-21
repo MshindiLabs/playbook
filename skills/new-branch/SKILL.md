@@ -189,6 +189,8 @@ git push -u origin <branch-name>
 
 Pushing publishes the branch name and its commits — treat it as an outward-facing action and confirm first.
 
+If a guard or a git hook blocks the push, fix the cause and never bypass it (no `--no-verify`). See "If a guard or a git hook blocks you" in the `commit-changes` skill.
+
 ---
 
 ## Judgment calls

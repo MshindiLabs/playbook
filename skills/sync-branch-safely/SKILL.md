@@ -117,6 +117,8 @@ If the repo already has a clear team convention, follow it. Otherwise prefer the
 
 Use the smallest safe Git commands needed for the chosen strategy.
 
+If a guard or a git hook blocks a commit or push, fix the cause and never bypass it (no `--no-verify`). See "If a guard or a git hook blocks you" in the `commit-changes` skill.
+
 Examples of safe operations:
 
 - `git push -u origin <branch>`

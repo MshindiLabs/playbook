@@ -262,6 +262,24 @@ test('--check says when the installed copy is out of date', () => {
   assert.match(report.out.join('\n'), /differs from this skill/);
 });
 
+test('--check says when the hooks still run from outside the copy', () => {
+  const { home, settings } = setup();
+  run(['--apply', '--agent', 'claude'], { home, sourceDir, ...quiet });
+  const config = read(settings);
+  const elsewhere = mkdtempSync(join(tmpdir(), 'guards-old-'));
+  cpSync(sourceDir, join(elsewhere, 'guard-hooks', 'scripts'), { recursive: true });
+  const command = `node "${join(elsewhere, 'guard-hooks', 'scripts', 'guard.mjs')}" pre-tool --agent claude`;
+  for (const entry of config.hooks.PreToolUse) entry.hooks[0].command = command;
+  config.hooks.Stop[0].hooks[0].command = command.replace('pre-tool', 'stop');
+  writeFileSync(settings, JSON.stringify(config));
+  rmSync(installedDir(home), { recursive: true });
+
+  const report = lines();
+  assert.equal(run(['--check'], { home, sourceDir, log: report.log }), true);
+  assert.match(report.out.join('\n'), /there is none yet/);
+  assert.doesNotMatch(report.out.join('\n'), /differs|MISSING/);
+});
+
 test('the command line exits 1 when --check finds a dangling hook', () => {
   const { home } = setup();
   run(['--apply'], { home, sourceDir, ...quiet });

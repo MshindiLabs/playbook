@@ -195,6 +195,10 @@ export function check({ home, sourceDir, agents, log }) {
     log(
       '\nA hook points at a script that is not there, so that guard is off. Run the installer with --apply to repair it.',
     );
+  } else if (!existsSync(dest)) {
+    log(
+      `\nThe hooks do not run from the copy in ${dest}: there is none yet. Run the installer with --apply to move them to it.`,
+    );
   } else if (!sameDir(sourceDir, dest) && fingerprint(sourceDir) !== fingerprint(dest)) {
     log(
       `\nThe installed copy in ${dest} differs from this skill's scripts. Run the installer with --apply to refresh it.`,
