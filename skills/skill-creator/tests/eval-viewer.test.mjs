@@ -5,7 +5,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
-import { connect } from 'node:net';
+import { connect, createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -243,6 +243,112 @@ describe('the review server', () => {
       headers: { ...goodWrite(), 'Content-Length': 'abc' },
     });
     assert.equal(odd.status, 413);
+  });
+});
+
+/**
+ * Start a separate process that listens on 127.0.0.1 and report the port it was given. The child
+ * goes into `stops` as soon as it exists, so a failed start cannot leave it running.
+ */
+async function startHolder(stops) {
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      "const s = require('node:net').createServer(); s.listen(0, '127.0.0.1', () => console.log(s.address().port));",
+    ],
+    { stdio: ['ignore', 'pipe', 'inherit'] },
+  );
+  stops.push(child);
+  const held = await new Promise((done, fail) => {
+    child.stdout.once('data', (chunk) => done(Number(String(chunk).trim())));
+    child.once('exit', (code) => fail(new Error(`holder exited with ${code}`)));
+  });
+  return { child, port: held };
+}
+
+/**
+ * Start the viewer on `port` and wait for its URL line. Resolves with the bound port and stdout.
+ * The child goes into `stops` as soon as it exists, so a viewer that never prints its URL (the
+ * 10 s timeout below) is still killed by the caller's cleanup.
+ */
+async function startViewer(ws, port, stops) {
+  const child = spawn('python3', ['-I', '-u', script, ws, '--port', String(port)], {
+    env: { ...process.env, BROWSER: 'true' },
+  });
+  stops.push(child);
+  let out = '';
+  const boundPort = await new Promise((done, fail) => {
+    const timer = setTimeout(() => fail(new Error(`no URL line from the viewer: ${out}`)), 10_000);
+    child.stdout.on('data', (chunk) => {
+      out += chunk;
+      const match = out.match(/URL:\s+http:\/\/localhost:(\d+)/);
+      if (match) {
+        clearTimeout(timer);
+        done(Number(match[1]));
+      }
+    });
+    child.once('exit', (code) => {
+      clearTimeout(timer);
+      fail(new Error(`viewer exited with ${code}: ${out}`));
+    });
+  });
+  return { child, port: boundPort, stdout: () => out };
+}
+
+function freePort() {
+  return new Promise((done, fail) => {
+    const probe = createServer();
+    probe.once('error', fail);
+    probe.listen(0, '127.0.0.1', () => {
+      const { port } = probe.address();
+      probe.close(() => done(port));
+    });
+  });
+}
+
+function canConnect(port) {
+  return new Promise((done) => {
+    const socket = connect(port, '127.0.0.1');
+    socket.once('connect', () => {
+      socket.destroy();
+      done(true);
+    });
+    socket.once('error', () => done(false));
+  });
+}
+
+describe('the review server when its port is taken', () => {
+  const stops = [];
+  const ws = makeWorkspace();
+
+  after(() => {
+    for (const child of stops) child.kill();
+    rmSync(ws, { recursive: true, force: true });
+  });
+
+  it('falls back to a free port and leaves the process holding the port alone', async () => {
+    const holder = await startHolder(stops);
+    const viewer = await startViewer(ws, holder.port, stops);
+
+    assert.notEqual(viewer.port, holder.port);
+    assert.ok(
+      viewer.stdout().includes(`Port ${holder.port} is in use; using ${viewer.port}`),
+      `no fallback notice in: ${viewer.stdout()}`,
+    );
+    const page = await send({ port: viewer.port });
+    assert.equal(page.status, 200);
+    assert.equal(holder.child.exitCode, null, 'the holder exited');
+    assert.equal(holder.child.signalCode, null, `the holder was sent ${holder.child.signalCode}`);
+    assert.ok(await canConnect(holder.port), 'the holder no longer accepts connections');
+  });
+
+  it('binds the requested port, with no notice, when it is free', async () => {
+    const wanted = await freePort();
+    const viewer = await startViewer(ws, wanted, stops);
+
+    assert.equal(viewer.port, wanted);
+    assert.ok(!viewer.stdout().includes(`Port ${wanted} `), viewer.stdout());
   });
 });
 
