@@ -1,6 +1,6 @@
 # playbook
 
-Mshindi Labs Playbook: 60 agent skills for AI coding assistants — code review,
+Mshindi Labs Playbook: 61 agent skills for AI coding assistants — code review,
 debugging, git and release workflow, testing, codebase orientation, and project setup.
 
 A skill is a packaged set of instructions your agent loads when the task matches.
@@ -183,20 +183,21 @@ right place instead of the first match.
 
 ### Git, PRs, and releases
 
-| Skill                     | What it does                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `commit-changes`          | One clean Conventional Commit — explicit staging, validated message, no AI attribution.                             |
-| `amend-safely`            | Fixes the last commit's message or contents, with guardrails against rewriting history that has already shipped.    |
-| `run-pre-pr-checks`       | Runs the project's real format/lint/typecheck/test scripts and reports a PASS/FAIL gate.                            |
-| `create-pr`               | Opens a PR to any target branch — validates state, commits pending work, pushes, writes the body.                   |
-| `address-pr-review`       | Triages review comments, applies the changes, writes follow-up commits, and drafts the re-review summary.           |
-| `resolve-merge-conflicts` | Resolves conflict markers by understanding both sides' intent, never silently dropping work.                        |
-| `sync-branch-safely`      | Syncs a branch with its remote or base, stopping on anything ambiguous instead of defaulting to destructive.        |
-| `clean-branch`            | Finds stale local branches and confirms the list with you before deleting anything.                                 |
-| `revert-change-safely`    | Backs out a pushed or merged change, assessing blast radius first.                                                  |
-| `ship-release-candidate`  | Cuts an RC PR to main: checks conflicts, infers the version bump from commit history, drafts release-focused notes. |
-| `hotfix-release`          | Emergency fix on a release line — correct base tag, minimal change, merge-back plan for every affected branch.      |
-| `prepare-release-notes`   | Turns a commit range into release notes grouped by user impact, with breaking changes and upgrade steps called out. |
+| Skill                     | What it does                                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `commit-changes`          | One clean Conventional Commit — explicit staging, validated message, no AI attribution.                                      |
+| `new-branch`              | Creates a branch named `<prefix>.<type>.<TICKET>.<short-description>` from a fresh base, without stranding uncommitted work. |
+| `amend-safely`            | Fixes the last commit's message or contents, with guardrails against rewriting history that has already shipped.             |
+| `run-pre-pr-checks`       | Runs the project's real format/lint/typecheck/test scripts and reports a PASS/FAIL gate.                                     |
+| `create-pr`               | Opens a PR to any target branch — validates state, commits pending work, pushes, writes the body.                            |
+| `address-pr-review`       | Triages review comments, applies the changes, writes follow-up commits, and drafts the re-review summary.                    |
+| `resolve-merge-conflicts` | Resolves conflict markers by understanding both sides' intent, never silently dropping work.                                 |
+| `sync-branch-safely`      | Syncs a branch with its remote or base, stopping on anything ambiguous instead of defaulting to destructive.                 |
+| `clean-branch`            | Finds stale local branches and confirms the list with you before deleting anything.                                          |
+| `revert-change-safely`    | Backs out a pushed or merged change, assessing blast radius first.                                                           |
+| `ship-release-candidate`  | Cuts an RC PR to main: checks conflicts, infers the version bump from commit history, drafts release-focused notes.          |
+| `hotfix-release`          | Emergency fix on a release line — correct base tag, minimal change, merge-back plan for every affected branch.               |
+| `prepare-release-notes`   | Turns a commit range into release notes grouped by user impact, with breaking changes and upgrade steps called out.          |
 
 ### Understanding a codebase
 
