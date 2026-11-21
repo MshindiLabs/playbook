@@ -1,0 +1,42 @@
+[
+  {
+    "query": "review the logging in this PR before I merge",
+    "should_trigger": true
+  },
+  {
+    "query": "will we be able to trace this request across our services?",
+    "should_trigger": true
+  },
+  {
+    "query": "check our error reporting and health endpoint in this diff",
+    "should_trigger": true
+  },
+  {
+    "query": "is anything sensitive ending up in our logs here",
+    "should_trigger": true
+  },
+  {
+    "query": "does this cron job alert us when it stops running",
+    "should_trigger": true
+  },
+  {
+    "query": "production is down and we are getting paged right now",
+    "should_trigger": false
+  },
+  {
+    "query": "did I commit an API key in this branch",
+    "should_trigger": false
+  },
+  {
+    "query": "review my changes before I push",
+    "should_trigger": false
+  },
+  {
+    "query": "review the API shape of this PR",
+    "should_trigger": false
+  },
+  {
+    "query": "add a dashboard for request latency",
+    "should_trigger": false
+  }
+]
