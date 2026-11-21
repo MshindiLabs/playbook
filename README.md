@@ -1,6 +1,6 @@
 # playbook
 
-Mshindi Labs Playbook: 61 agent skills for AI coding assistants — code review,
+Mshindi Labs Playbook: 62 agent skills for AI coding assistants — code review,
 debugging, git and release workflow, testing, codebase orientation, and project setup.
 
 A skill is a packaged set of instructions your agent loads when the task matches.
@@ -247,13 +247,14 @@ right place instead of the first match.
 
 ### Project setup and CI
 
-| Skill                            | What it does                                                                                              |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `setup-env`                      | Generates a fillable `.env.stub` for what your local setup is missing, and checks `.gitignore` covers it. |
-| `align-env-checklist`            | Verifies every env var the code reads is documented, validated, and that no real `.env` is tracked.       |
-| `improve-getting-started`        | Closes the gap between what the README claims and what actually works for a new contributor.              |
-| `setup-commit-hooks-and-release` | Wires up Husky, commitlint, lint-staged, semantic-release, and the GitHub Actions release workflow.       |
-| `check-ci-health`                | Inspects CI config for trigger misconfigurations, security risks, caching gaps, and slow paths.           |
+| Skill                            | What it does                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `setup-env`                      | Generates a fillable `.env.stub` for what your local setup is missing, and checks `.gitignore` covers it.                                                                                              |
+| `align-env-checklist`            | Verifies every env var the code reads is documented, validated, and that no real `.env` is tracked.                                                                                                    |
+| `improve-getting-started`        | Closes the gap between what the README claims and what actually works for a new contributor.                                                                                                           |
+| `guard-hooks`                    | Installs deterministic guards into Claude Code and Codex: no skipped git hooks, no staged secrets, no attribution lines, protected config and default branch, typecheck on stop. Runs only when asked. |
+| `setup-commit-hooks-and-release` | Wires up Husky, commitlint, lint-staged, semantic-release, and the GitHub Actions release workflow.                                                                                                    |
+| `check-ci-health`                | Inspects CI config for trigger misconfigurations, security risks, caching gaps, and slow paths.                                                                                                        |
 
 ### Dependencies and design
 
