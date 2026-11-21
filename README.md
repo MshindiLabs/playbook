@@ -1,6 +1,6 @@
 # playbook
 
-Mshindi Labs Playbook: 62 agent skills for AI coding assistants — code review,
+Mshindi Labs Playbook: 63 agent skills for AI coding assistants — code review,
 debugging, git and release workflow, testing, codebase orientation, and project setup.
 
 A skill is a packaged set of instructions your agent loads when the task matches.
@@ -181,7 +181,7 @@ when you want the deep pass rather than whatever the agent judged to be closest.
 
 **Related skills know their boundaries.** `review-changes` is the generalist: it
 flags auth, migration, and query issues in passing and then hands the deep pass to
-`review-auth`, `review-migration`, or `check-query-safety`. Each skill's description
+`review-auth`, `review-migration`, `check-query-safety`, or `review-api`. Each skill's description
 says what it owns and which sibling to prefer, so overlapping requests land in the
 right place instead of the first match.
 
@@ -191,14 +191,15 @@ right place instead of the first match.
 
 ### Review and audit
 
-| Skill                | What it does                                                                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `review-changes`     | Reviews a diff like an experienced teammate — highest-risk issues first, no leading praise. The generalist; hands deep passes to the three specialists below.       |
-| `review-auth`        | Audits authentication and authorization paths for bypasses, missing ownership checks, and IDOR.                                                                     |
-| `review-migration`   | Analyzes a schema migration for data-loss, locking, reversibility, and backfill risk before it runs in production. Names the actual lock type each operation takes. |
-| `check-query-safety` | Finds N+1 patterns, unbounded scans, SQL injection, over-fetching, and missing transaction boundaries in application queries.                                       |
-| `audit-secrets`      | Scans the working tree **and git history** for committed credentials — including secrets that survive after the file was deleted. Always says rotate, not delete.   |
-| `audit-dependencies` | Reports CVEs, badly outdated packages, license risk, and genuinely unused dependencies. Read-only — pair with `upgrade-dependencies` to act on it.                  |
+| Skill                | What it does                                                                                                                                                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `review-changes`     | Reviews a diff like an experienced teammate — highest-risk issues first, no leading praise. The generalist; hands deep passes to the specialists below.                                                  |
+| `review-auth`        | Audits authentication and authorization paths for bypasses, missing ownership checks, and IDOR.                                                                                                          |
+| `review-migration`   | Analyzes a schema migration for data-loss, locking, reversibility, and backfill risk before it runs in production. Names the actual lock type each operation takes.                                      |
+| `check-query-safety` | Finds N+1 patterns, unbounded scans, SQL injection, over-fetching, and missing transaction boundaries in application queries.                                                                            |
+| `review-api`         | Reviews a diff or a set of endpoints for API shape: one list envelope, route naming, validation at the HTTP boundary, bounded selector endpoints, error shape. Finds the project's own convention first. |
+| `audit-secrets`      | Scans the working tree **and git history** for committed credentials — including secrets that survive after the file was deleted. Always says rotate, not delete.                                        |
+| `audit-dependencies` | Reports CVEs, badly outdated packages, license risk, and genuinely unused dependencies. Read-only — pair with `upgrade-dependencies` to act on it.                                                       |
 
 ### Debugging and incidents
 
