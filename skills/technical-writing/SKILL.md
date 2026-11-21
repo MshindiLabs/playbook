@@ -1,7 +1,7 @@
 ---
 name: technical-writing
 description: >
-  Layered technical-writing standard: Diataxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Trigger on "write the docs", "review this README", "tidy this RFC", "write a PR description", "write a commit message", or whenever writing or reviewing docs, RFCs, readmes, PR descriptions, or commit messages.
+  Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Trigger on "write the docs", "review this README", "tidy this RFC", "write a PR description", "write a commit message", or whenever writing or reviewing docs, RFCs, readmes, PR descriptions, or commit messages.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/technical-writing

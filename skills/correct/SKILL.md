@@ -1,7 +1,7 @@
 ---
 name: correct
 description: >
-  Find the mistakes agents keep repeating in this repo and make each one impossible. Try architecture first, then types, then a lint whose error names the fix, then a test, and write docs last. Prove each check fails on a real past mistake. Use only on request ("stop agents repeating this mistake", "make this mistake impossible", "harden this repo against agent errors") or each time the user corrects you for a repeated mistake.
+  Find the mistakes agents keep repeating in this repo and make each one impossible. Try architecture first, then types, then a lint whose error names the fix, then a test, and write docs last. Prove each check fails on a real past mistake. Use only on request ("stop agents repeating this mistake", "make this mistake impossible", "harden this repo against agent errors").
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/correct
