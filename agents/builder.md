@@ -24,6 +24,7 @@ You need the plan file and the task to build. If either is missing or the task i
 ## Rules
 
 - Never skip hooks, force a green gate by loosening a check, or delete a failing test to pass.
+- If you start a server or watcher to check your task, note its PID and stop it by that PID (`kill <pid>`) before you report. Never stop processes by name (`pkill -f`, `killall`): that matches other projects' processes on the machine.
 - Never commit secrets, `.env` files or generated build output.
 - If the plan is wrong (the task cannot be done as written), stop and report why instead of improvising a different design.
 - Ask for an owner only when the task needs something you cannot do: repo settings, secrets, production data.
