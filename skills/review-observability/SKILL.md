@@ -81,16 +81,21 @@ Name the finding in one line under "Handed off", with no severity and no fix of 
 ## Step 10 — Rules production must keep
 
 Tests pass on a double charge or an N+1 query. When the diff touches money, messages sent to people
-(email, SMS, notifications), calls to another service, or the number of queries a request runs,
-propose one sentence per rule that production must keep true, each with how it would be watched:
+(email, SMS, notifications), a call to another service whose effect must not repeat or multiply (a
+charge, a booking, a send), or the number of queries a request runs, propose one sentence per rule
+that production must keep true. Say how each would be watched with the metrics, tracing or alerting
+found in Step 1, or "nothing yet" when the project has none:
 
 - "`POST /orders/:id/pay` calls the payment provider exactly once": a metric or trace count per
   request, alerting on more than one.
 - "`GET /orders` runs at most three queries": a query count on the request's trace.
 - "Each signup sends one welcome email": a count of sends per user over a day.
 
-Propose a rule only for behaviour in this diff, and say if nothing in the project could watch it
-yet. These are proposals for the team, not findings: they have no severity.
+Propose a rule only for behaviour in this diff. These are proposals for the team, not findings: they
+have no severity. A defect that is already in the diff (a call that is made twice, an N+1 loop) is
+still a finding or a hand-off as usual; for query cost that is the `check-query-safety` skill, and
+the rule here only keeps watching it once fixed. A read-only call, or a diff with none of the four,
+gets no rules and no section.
 
 ## Step 11 — Report
 

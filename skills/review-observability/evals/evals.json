@@ -40,6 +40,28 @@
         "Does not diagnose the production 500s itself; the live incident appears only under 'Handed off' as a single line pointing to the triage-error skill, with no severity and no fix of its own",
         "Uses the skill's numbered, severity-tagged report structure for the logging findings"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Review the observability of this change before I merge it.\n\n```typescript\n// src/orders/orders.service.ts\nasync pay(orderId: string, ctx: RequestContext) {\n  const order = await this.orders.findForPayment(orderId);\n  const charge = await this.payments.charge(ctx, { amount: order.totalCents, currency: order.currency, idempotencyKey: `order-${order.id}` });\n  await this.orders.markPaid(order.id, charge.id);\n  this.logger.info({ requestId: ctx.requestId, orderId, chargeId: charge.id }, 'order paid');\n  await this.mail.send(ctx, order.customerEmail, 'receipt', { orderId });\n}\n```\n\nThe project's docs say logs go through this.logger with the request id, and every service call takes ctx so the id propagates. Metrics are exported with prom-client from src/metrics.ts (counters per route). There is no tracing.",
+      "expected_output": "A report with no high or medium findings for this code (it follows the documented logging and propagation convention), and a 'Rules production must keep' section proposing, without severities, that paying an order charges the provider exactly once and that each paid order sends one receipt, each watched with a prom-client counter from src/metrics.ts.",
+      "files": [],
+      "assertions": [
+        "Does not report the logger call or the service calls as findings, since they follow the documented convention",
+        "Includes a 'Rules production must keep' section with a rule that paying an order charges the payment provider exactly once, and a rule that each paid order sends one receipt email",
+        "Says each rule would be watched with a counter from the existing prom-client metrics in src/metrics.ts, not with tracing (which the project does not have)",
+        "Gives the rules no severity and does not list them as findings"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Check the logging in this PR.\n\n```typescript\n// src/catalog/catalog.controller.ts\n@Get(':slug')\nasync findOne(@Param('slug') slug: string, @Req() req: Request) {\n  const product = await this.catalog.findBySlug(slug);\n  if (!product) throw new NotFoundException();\n  return product;\n}\n```\n\nThe project's logger is injected as this.logger and other handlers do not log reads. Error reporting is set up globally in src/main.ts and skips 4xx.",
+      "expected_output": "A short report that finds nothing to fix in this read-only handler (it follows the convention of not logging reads, and the global reporter skips the 404), and has no 'Rules production must keep' section, because the diff touches no money, messages, side-effecting calls or query counts.",
+      "files": [],
+      "assertions": [
+        "Reports no findings for the handler, or only a question, and does not ask for a log line on a read the convention does not log",
+        "Does not include a 'Rules production must keep' section or propose any production rule"
+      ]
     }
   ]
 }
