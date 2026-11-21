@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Use this agent to review a diff for security defects, covering authentication and authorization bypasses, missing ownership checks, IDOR, secrets in the diff or in git history, and injection through queries or user input. Use it whenever a change touches auth, guards, permissions, tokens, environment variables, request handlers or database queries, or when the user asks for a security review.
+description: Use this agent to review a diff for security defects, covering authentication and authorization bypasses, missing ownership checks, IDOR, secrets in the diff or in git history, and injection through queries or user input. Use it only when the user asks for a security review, or when a workflow dispatches it for a change that touches auth, guards, permissions, tokens, environment variables, request handlers or database queries.
 model: opus
 color: red
 tools: Read, Grep, Glob, Bash, Skill

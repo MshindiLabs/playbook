@@ -2,13 +2,14 @@
 name: create-pr
 description: >
   Open a pull request from the current branch to any target branch, defaulting to the
-  repository's main branch. Validates branch state, commits pending work safely, pushes,
-  and opens the PR with gh pr create. Use this for every PR regardless of target —
-  feature branches to main, and also to dev, staging, or release lines. Trigger on
-  "open a PR", "ship this", "ship it to main", "create a pull request", "raise a PR for
-  this branch", "merge this into main", "put this up for review". Run run-pre-pr-checks
-  first if the local quality gate has not passed yet; use ship-release-candidate instead
-  when the branch bundles multiple changes into a versioned release.
+  repository's main branch. Validates branch state, commits pending work safely, shows
+  what will be published and waits for a yes, then pushes and opens the PR with gh pr
+  create. Use this for every single-change PR regardless of target — feature branches to
+  main, and also to dev, staging, or release lines. Trigger on "open a PR", "create a
+  pull request", "raise a PR for this branch", "put this up for review". Run
+  run-pre-pr-checks first if the local quality gate has not passed yet; use
+  ship-release-candidate instead when the branch bundles multiple changes into a
+  versioned release.
 ---
 
 # create-pr
@@ -33,23 +34,9 @@ git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/|
 
 ## Commit & PR hygiene (always applies)
 
-These rules apply to every commit message, PR title, PR body, and release note this command produces.
+Include the ticket or issue reference when one exists, and never invent one. Never add AI or agent attribution (`Co-authored-by:` naming an AI tool, "Generated with ..." and the like) to a commit, PR or release note, and strip any you find. The `commit-changes` skill has the full rules.
 
-**Ticket reference — always include one when it exists.**
-
-- Derive the ticket, in priority order, from:
-  1. The user's explicit input for this run
-  2. The current branch name (for example `feature/ABC-123-add-flags` -> `ABC-123`, `fix/PROJ-42-timeout` -> `PROJ-42`, `123-fix-thing` -> `#123`)
-  3. Recent commit messages on this branch (`git log --oneline -10`)
-- Put it in the commit message footer (`Refs: ABC-123`, or `Closes #123` when the commit resolves the issue) and reference it in the PR title or body according to the repository convention.
-- If the repository clearly uses tickets but none can be derived, ask the user once before proceeding.
-- Never invent a ticket number. If genuinely none exists, proceed without one.
-
-**No agentic annotations — ever.**
-
-- Never add, and always strip when found: `Co-authored-by:` lines referencing AI tools, `Generated with ...`, `Made-with: ...`, robot emoji (🤖) watermarks, "This commit/PR was created by ..." notes, or any other AI/agent attribution or tool advertisement.
-- This applies to commit messages, amended messages, PR titles, PR bodies, release notes, and changelog entries.
-- When amending, rebasing, cherry-picking, or reusing an existing message, remove any such annotations already present before continuing.
+If a guard or a git hook blocks a commit or push, fix the cause and never bypass it (no `--no-verify`). See "If a guard or a git hook blocks you" in the `commit-changes` skill.
 
 ---
 
@@ -124,7 +111,9 @@ If a template exists:
 - Fill in only the sections supported by the actual diff and evidence available
 - Leave placeholders or unchecked items only when the information is genuinely unavailable
 
-For this repository, prefer the detected template over any generic fallback.
+Prefer the detected template over any generic fallback.
+
+If there is no PR template in this repo, use the fallback structure in Step 7.
 
 ---
 
@@ -173,11 +162,18 @@ If there is nothing new to commit, skip this step.
 
 ---
 
-## Step 6 — Push safely
+## Step 6 — Confirm with the user, then push
 
-Push `CURRENT_BRANCH` only after confirming the branch state.
+Pushing and opening a PR publish the work. Before the first push, draft the PR title (rules in Step 7) and show the user:
 
-Preferred commands:
+- the head branch (`CURRENT_BRANCH`) and the base branch (`TARGET_BRANCH`)
+- the commits that will be in the PR (`git log origin/<TARGET_BRANCH>..HEAD --oneline`)
+- the PR title
+- whether the branch still has to be pushed
+
+Then stop and wait for a yes. The request that started this skill is not that yes, because the user had not seen this summary. Without a yes, do not push and do not create the PR. If the base, the commits or the title change after the yes, show the summary again and ask again.
+
+After the yes, push:
 
 ```bash
 git push -u origin <CURRENT_BRANCH>
@@ -211,7 +207,7 @@ Use the best summary of the branch:
 
 If a repository PR template exists, use it.
 
-For this repository, populate these sections when applicable:
+If there is no PR template in this repo, use this fallback and delete every section that does not apply:
 
 ```markdown
 ## Summary
@@ -225,7 +221,7 @@ For this repository, populate these sections when applicable:
 
 ## Related Issue(s)
 
-- <Fixes/Closes/Relates to ... if known>
+- <Fixes/Closes/Refs ... issue or ticket, if known>
 
 ## Type of Change
 
@@ -250,10 +246,6 @@ For this repository, populate these sections when applicable:
 ## Checklist
 
 - [x] <only for items you can support with evidence>
-
-## JIRA Ticket(s)
-
-<ticket if known>
 
 ## Screenshots (if applicable)
 
@@ -289,6 +281,7 @@ EOF
 
 Before running it:
 
+- Ensure the user said yes in Step 6 to this base and this title
 - Ensure there is no existing open PR for the same `head` and `base`
 - Ensure the branch has been pushed successfully
 - Ensure the body reflects the repository template if one exists

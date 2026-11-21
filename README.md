@@ -8,11 +8,47 @@ Instead of re-explaining how you want a migration reviewed or a commit written, 
 install the skill once and the agent picks it up on its own from what you asked for.
 
 Skills follow the [Agent Skills](https://agentskills.io/) format and work with Claude
-Code, Cursor, Windsurf, Copilot, and other agents that read `SKILL.md` files.
+Code, Codex, Cursor, Windsurf, Copilot, and other agents that read `SKILL.md` files.
 
 ---
 
-## Installation
+## Start here
+
+**1. Install the skills.** Run the line for your agent:
+
+| Agent       | Command                                                       |
+| ----------- | ------------------------------------------------------------- |
+| Claude Code | `npx -y skills add MshindiLabs/playbook -g -y -a claude-code` |
+| Codex       | `npx -y skills add MshindiLabs/playbook -g -y -a codex`       |
+| Cursor      | `npx -y skills add MshindiLabs/playbook -g -y -a cursor`      |
+
+Or all three at once:
+
+```bash
+npx -y skills add MshindiLabs/playbook -g -y -a codex -a cursor -a claude-code
+```
+
+This installs every skill for your user account in `~/.agents/skills` and symlinks them into each
+agent. Add `-s <name>` to install one skill.
+
+**2. Install the guard hooks.** Ask your agent to "install the guard hooks". The `guard-hooks`
+skill prints the change to your agent config and applies it only after you agree. The guards stop
+an agent from skipping git hooks, committing secrets, or committing straight to the default
+branch. Afterwards, start a new session in Claude Code; in Codex, run `/hooks` and trust the new
+hooks. Cursor imports the Claude Code entries.
+
+**Use one route, not two.** This route is the one to prefer: it covers all three agents. The
+Claude Code plugin below is an alternative that also carries the [agents](#agents). With both
+installed, Claude Code offers each skill twice and a request can trigger the wrong copy.
+
+- Moving to the plugin: remove these copies first (`npx skills list -g`, then
+  `npx skills remove -g <name>`).
+- Moving to this route: uninstall the plugin first
+  (`/plugin uninstall playbook@mshindilabs-public`).
+
+---
+
+## Other ways to install
 
 <!-- plugin-install -->
 
@@ -24,16 +60,16 @@ Code, Cursor, Windsurf, Copilot, and other agents that read `SKILL.md` files.
 ```
 
 This gives you the skills below and the public agents. Update with
-`/plugin update playbook@mshindilabs-public`. If you already installed the skills with `npx skills`,
-remove those copies first (`npx skills list`, `npx skills remove <name>`), or both versions of a
-skill will be offered.
+`/plugin update playbook@mshindilabs-public`. Do not combine it with an `npx skills` install of the
+same skills (see [Start here](#start-here)).
 
-With this many skills, Claude Code's default 8,000-character budget for skill descriptions runs
-out, and skills stop triggering on their own because the model sees names only. Raise the budget
-in your settings:
+Claude Code lists skill descriptions within a budget, 1% of the model's context window by default.
+With this many skills the listing can overflow, and the skills you use least are then listed by
+name only and stop triggering on their own. Run `/doctor` to check, and raise the budget in your
+settings if needed (`0.02` is 2%):
 
 ```json
-{ "env": { "SLASH_COMMAND_TOOL_CHAR_BUDGET": "40000" } }
+{ "skillListingBudgetFraction": 0.02 }
 ```
 
 <!-- /plugin-install -->

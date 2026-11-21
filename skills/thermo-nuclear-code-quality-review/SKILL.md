@@ -1,7 +1,10 @@
 ---
 name: thermo-nuclear-code-quality-review
 description: >
-  Run an extremely strict maintainability review for abstraction quality, giant files, and spaghetti-condition growth. Trigger on "thermo-nuclear code quality review", "thermonuclear review", "deep code quality audit", or "harsh maintainability review".
+  Run an extremely strict maintainability review for abstraction quality, giant files,
+  and spaghetti-condition growth. Trigger on "thermo-nuclear code quality review",
+  "thermonuclear review", "deep code quality audit", or "harsh maintainability review".
+  For an ordinary review of a diff, use the `review-changes` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 thermos/skills/thermo-nuclear-code-quality-review

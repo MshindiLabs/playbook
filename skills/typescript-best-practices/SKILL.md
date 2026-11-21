@@ -1,7 +1,11 @@
 ---
 name: typescript-best-practices
 description: >
-  TypeScript best practices for typing, narrowing, validation and tests. Trigger when reading or editing any .ts or .tsx file, or on "review the types", "remove this cast", "model this as a union".
+  TypeScript best practices for typing, narrowing, validation and tests. Use when the
+  task is about types: modelling data as a union, removing a cast or an `any`, narrowing
+  unknown input, validating at a boundary, or typing a test. Trigger on "review the
+  types", "remove this cast", "model this as a union". Not for every TypeScript edit.
+  For functional style use the `functional-typescript` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/typescript-best-practices

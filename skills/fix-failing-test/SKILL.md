@@ -1,14 +1,13 @@
 ---
 name: fix-failing-test
 description: >
-  Get a failing test back to green by identifying whether the test, the
-  production code, or both are wrong. Avoids weakening assertions or
-  changing snapshots without understanding why they changed. Trigger on "why
-  is this test failing", "this test broke after my change", "this test is
-  red", "make this test pass", or "test was passing yesterday and now
-  isn't". Scoped to a single failing test or suite — when the whole CI
-  pipeline is red instead of one test, use triage-ci-failure to diagnose the
-  run.
+  Get a failing test back to green by identifying whether the test, the production code,
+  or both are wrong. Avoids weakening assertions or changing snapshots without
+  understanding why they changed. Trigger on "why is this test failing", "this test
+  keeps failing", "this test broke after my change", "this test is red", "make this test
+  pass", or "test was passing yesterday and now isn't". Scoped to a single failing test
+  or suite — when the whole CI pipeline is red, use triage-ci-failure; when the failure
+  is not a test, or the bug's cause is unknown, use debug-issue.
 ---
 
 # fix-failing-test

@@ -1,7 +1,10 @@
 ---
 name: tdd
 description: >
-  Fix a bug by writing a failing test first. Use only when the user explicitly asks for TDD, a failing test, or a regression test, or when the bug has an obvious cheap local test target. Skip when the test path is unclear, expensive, integration-heavy, or not requested.
+  Fix a bug by writing a failing test first. Use only when the user asks for it: "use
+  TDD", "write a failing test first", "add a regression test for this bug", "red-green
+  this". Skip when the test path is unclear, expensive or integration-heavy. For a test
+  that is already failing, use the `fix-failing-test` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/tdd

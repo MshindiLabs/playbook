@@ -1,0 +1,53 @@
+{
+  "skill_name": "blast-radius",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "What could the toSlug change on this branch break? It's a two-line diff and the tests pass, but I don't quite trust it. The repo is at the path given in the fixture.",
+      "expected_output": "A writeup in the skill's five parts whose central claim is proven by running the repo's own code. The change makes toSlug lowercase and strip accents. The breakage grep does not show is in data/posts.json: slugs stored by the old function (\"Hello-World\", \"Café-Menu\") no longer equal toSlug(title), so findByTitle in src/posts.mjs returns undefined for existing posts. The reply shows a script or test that imports the real modules, and its pasted output. src/feed.mjs is listed as checked and cleared, because its ids are rebuilt on every render and stored nowhere. \"Before you merge\" gives the cheapest test that catches the bug.",
+      "files": [
+        "skills/blast-radius/evals/fixtures/slug-normalisation-change/"
+      ],
+      "assertions": [
+        "Identifies the real breakage: slugs already stored in data/posts.json were made by the old toSlug, so findByTitle (src/posts.mjs) no longer finds existing posts such as \"Hello World\" or \"Café Menu\"",
+        "Proves it by running real code from the repo, not by reasoning alone: the transcript shows a script or test that imports src/posts.mjs or src/slug.mjs, and the reply pastes its actual output (for example findByTitle('Hello World') returning undefined)",
+        "States the one fact the change's safety depends on (for example that every stored slug equals the new toSlug of its title), says how far down the skill's ladder it got (ran it), and says the fact does not hold",
+        "Cites real locations for each risk as file:line, including the comparison in src/posts.mjs and the stored values in data/posts.json",
+        "Lists src/feed.mjs under what was checked and cleared, with the reason (anchor ids are generated per render and never stored), and does not report it as a risk",
+        "Notes that postUrl reads the stored slug and so keeps working, or otherwise separates the paths that read stored slugs from the path that rebuilds one",
+        "Has the skill's sections: what it does, the one fact it is safe because of, risks, cleared, and before you merge",
+        "\"Before you merge\" gives a concrete, cheap test or script that would catch this bug, and invents no caller, file or API that is not in the repo"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "blast radius of this? Reviewer wants to know before approving. I can't share the rest of the repo, it's a client project.\n\n```diff\n--- a/src/cache/price-cache.ts\n+++ b/src/cache/price-cache.ts\n@@ -41,7 +41,7 @@ export class PriceCache {\n   /** Called by the nightly job and by the admin \"refresh prices\" button. */\n   refresh(): void {\n-    this.lru.clear();\n+    this.lru.purgeStale();\n     this.lastRefresh = Date.now();\n   }\n }\n```\n\n`this.lru` is an instance of the LRU class from `acme-lru`, version pinned in the lockfile, I don't remember which.",
+      "expected_output": "An honest writeup that marks its central fact unproven. The change swaps \"drop everything\" for \"drop only stale entries\", so entries that are not stale by the library's definition now survive a refresh, which may be exactly what the admin button is supposed to prevent. Whether that is safe depends on one fact: what purgeStale() does in the pinned version (what counts as stale, and whether it does anything when no TTL is set). The reply says it could not read the library source or the lockfile, labels that fact unproven, does not describe the method's behaviour as if it had checked, and gives the exact check to run: read the pinned version's source and run a short script against the real library.",
+      "files": [],
+      "assertions": [
+        "States what changes in behaviour beyond the diff text: after refresh(), entries that are not stale remain in the cache, where before every entry was dropped",
+        "Names the one fact safety depends on: what purgeStale() does in the pinned version of the library, including what it treats as stale and what it does when entries have no TTL",
+        "Marks that fact as unproven, in so many words, because the library source, the pinned version and the rest of the repo were not available",
+        "Does not assert the behaviour of purgeStale() or of acme-lru as known fact, and does not invent callers, config or a version number",
+        "Ties the risk to the two callers the doc comment names (the nightly job and the admin refresh button) and says how it would show up: stale prices surviving a manual refresh",
+        "Gives the cheapest way to settle it: read the pinned version in the lockfile and the library's own source for purgeStale, and run a small script that fills the real LRU, calls purgeStale() and prints what is left",
+        "Keeps the skill's structure, including a \"before you merge\" step, and gives each risk a likelihood and a cost instead of a flat list of maybes"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "what could this break? small diff, the whole module and its only two callers are below, plus package.json.\n\n```diff\n--- a/src/scores.mjs\n+++ b/src/scores.mjs\n@@ -1,4 +1,4 @@\n export function sortScores(scores) {\n-  return scores.sort((a, b) => b.points - a.points);\n+  return scores.toSorted((a, b) => b.points - a.points);\n }\n```\n\n```js\n// src/leaderboard.mjs\nimport { sortScores } from './scores.mjs';\n\nexport function renderLeaderboard(scores) {\n  sortScores(scores);\n  return scores.map((s, i) => `${i + 1}. ${s.name} ${s.points}`).join('\\n');\n}\n```\n\n```js\n// src/podium.mjs\nimport { sortScores } from './scores.mjs';\n\nexport function podium(scores) {\n  return sortScores(scores).slice(0, 3).map((s) => s.name);\n}\n```\n\n```json\n{\n  \"name\": \"acme-scores\",\n  \"type\": \"module\",\n  \"engines\": { \"node\": \">=18\" }\n}\n```",
+      "expected_output": "Two findings the diff does not spell out, the first proven by running the code. One: sort() sorted the caller's array in place and toSorted() returns a new array, so renderLeaderboard, which ignores the return value and reads `scores` afterwards, now renders the leaderboard unsorted. The reply recreates the three small modules, runs them, and pastes the output showing the wrong order. Two: Array.prototype.toSorted needs Node 20, and package.json allows Node 18, where the call throws. podium() uses the return value and is listed as cleared. The reply ends with the cheapest test that catches the first bug.",
+      "files": [],
+      "assertions": [
+        "Identifies that renderLeaderboard breaks: it relied on sortScores mutating the array in place and ignores the return value, so with toSorted() it renders the scores in their original order",
+        "Proves it by running the code: recreates the pasted modules, runs renderLeaderboard on unsorted input, and pastes the real output showing the unsorted result",
+        "Identifies the runtime risk: Array.prototype.toSorted is not available in Node 18, which the engines field allows, so the call throws there",
+        "Says how far it got on the Node 18 point (ran it on an old runtime, or pointed at documentation, or unproven) instead of presenting an unchecked claim as verified",
+        "Lists podium() as checked and cleared, because it uses the returned array",
+        "States the one fact the change would be safe because of (no caller depends on the in-place sort) and says it is false",
+        "Ends with a concrete test to add before merging, such as asserting renderLeaderboard's output order for unsorted input"
+      ]
+    }
+  ]
+}

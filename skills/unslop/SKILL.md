@@ -1,7 +1,10 @@
 ---
 name: unslop
 description: >
-  Cut AI tells from any writing. Trigger on "unslop this", "remove the AI tells", "this reads like AI wrote it", "make this sound human", or when editing prose before it is published. Scans for stable numbered slop patterns and rewrites while keeping the meaning and tone.
+  Cut AI tells from prose: docs, messages, any writing. Trigger on "unslop this",
+  "remove the AI tells", "this reads like AI wrote it", "make this sound human", or when
+  editing prose before it is published. Scans for stable numbered slop patterns and
+  rewrites while keeping the meaning and tone. For code use the `deslop` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/unslop

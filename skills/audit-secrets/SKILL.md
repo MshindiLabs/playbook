@@ -8,7 +8,7 @@ description: >
   password". This skill owns the credential pattern set for the whole repo, including
   the git-history pass where a secret survives after the file is deleted — other skills
   delegate their secret checks here rather than reimplementing them. Always says to
-  rotate a exposed credential, not merely remove it.
+  rotate an exposed credential, not merely remove it.
 ---
 
 # audit-secrets
@@ -29,6 +29,7 @@ reproduces the literal is itself a copy of the secret. Dismiss it by category
 
 Determine what to scan:
 
+- if the user names a path, a diff or a commit range, scan only that
 - otherwise scan the full working tree plus recent git history
 
 Establish:
@@ -48,7 +49,11 @@ Search all tracked and untracked non-binary files for the following pattern cate
 - Private key blocks: `-----BEGIN (RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY`
 - JWT tokens: three base64 segments separated by dots starting with `eyJ`
 - AWS credentials: `AKIA[0-9A-Z]{16}`, `aws_secret_access_key`
-- GitHub tokens: `gh[pousr]_[A-Za-z0-9]{36,}`
+- GitHub tokens: `gh[pousr]_[A-Za-z0-9]{36,}`, `github_pat_[A-Za-z0-9_]{50,}`
+- npm tokens: `npm_[A-Za-z0-9]{36}`
+- Slack tokens: `xox[baprs]-[A-Za-z0-9-]{10,}`
+- Anthropic API keys: `sk-ant-[A-Za-z0-9_-]{20,}`
+- OpenAI API keys: `sk-(proj|svcacct)-[A-Za-z0-9_-]{40,}`, `sk-[A-Za-z0-9]{48}`
 - Stripe keys: `sk_live_`, `pk_live_`, `rk_live_`
 - Twilio: `SK[0-9a-fA-F]{32}`
 - Generic API key patterns in assignments: `api_key\s*=\s*["'][^"']{16,}["']`
@@ -66,6 +71,15 @@ Search all tracked and untracked non-binary files for the following pattern cate
 - Variable names containing `password`, `passwd`, `secret`, `token`, `credential`, `private_key`, `auth_key` assigned to non-empty string literals
 - Hard-coded localhost credentials with non-default passwords
 
+This list is the source for credential shapes in this skill set. The `guard-hooks` skill
+blocks commits on a narrower subset of it (the high-confidence shapes only); when you add a
+shape here that is specific enough to block on, add it there too.
+
+Search for locations, not values. Use a search that returns file names and line numbers
+(`grep -rnE "<pattern>" . | cut -d: -f1,2`), not one that prints the matching line: a
+printed line is a copy of the secret in the transcript. To get the masked form for the
+report, use the masking command in Step 3.
+
 Exclude:
 
 - `.git/` directory
@@ -82,8 +96,48 @@ list here — a secret matching only a pattern you dropped becomes invisible to 
 that matters most, since history survives deleting the file:
 
 ```bash
-git log -p --all --since="90 days ago" -20 -- . | grep -E \
-  "BEGIN (RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY|eyJ[A-Za-z0-9_-]{10,}|AKIA[0-9A-Z]{16}|aws_secret_access_key|gh[pousr]_[A-Za-z0-9]{36,}|sk_live_|pk_live_|rk_live_|SK[0-9a-fA-F]{32}|://[^:]+:[^@]{6,}@|Bearer [A-Za-z0-9._~+/-]{20,}|api_key|password|passwd|secret|token|credential|private_key|auth_key"
+while read -r name && read -r pattern; do
+  git log --all --since="90 days ago" -G"$pattern" \
+    --format="[$name] %h %ad %an" --date=short --name-only
+done <<'EOF'
+private key
+BEGIN ([A-Z]+ )*PRIVATE KEY
+JWT
+eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.
+AWS access key
+AKIA[0-9A-Z]{16}|aws_secret_access_key
+GitHub token
+gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,}
+npm token
+npm_[A-Za-z0-9]{36}
+Slack token
+xox[baprs]-[A-Za-z0-9-]{10,}
+Anthropic API key
+sk-ant-[A-Za-z0-9_-]{20,}
+OpenAI API key
+sk-(proj|svcacct)-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48}
+Stripe live key
+[spr]k_live_
+Twilio key
+SK[0-9a-fA-F]{32}
+connection string with a password
+://[^:/ ]+:[^@ ]{6,}@
+bearer token
+Bearer [A-Za-z0-9._~+/-]{20,}
+sensitive name assigned a literal
+(api_key|password|passwd|secret|token|credential|private_key|auth_key)[A-Za-z_]*["']?[[:space:]]*[:=][[:space:]]*["'][^"']{8,}
+EOF
+```
+
+Each pattern prints the commits whose diff adds or removes a matching line, with the
+files they touched. It prints no file content, so nothing it finds lands in the
+transcript. Do not replace it with `git log -p | grep`: that prints every matching line
+in full.
+
+To confirm a hit and get its masked form, print only the masked match, never the line:
+
+```bash
+git show <sha>:<path> | grep -oE "<pattern>" | sed -E 's/^(.{4}).*(.{4})$/\1****\2/'
 ```
 
 If Step 2's pattern list is ever edited, edit this command to match.
@@ -92,7 +146,7 @@ For any match found in history:
 
 - record the commit SHA, author, date, and file path
 - note whether the secret is still present in the current working tree or was removed in a later commit
-- if the secret was introduced and then removed, it is still in git history and needs to be rotated and purged
+- if the secret was introduced and then removed, it is still in git history and needs to be rotated
 
 ---
 
@@ -144,9 +198,12 @@ For each confirmed finding:
 **If the secret is in committed history:**
 
 - Rotate the credential immediately — assume it is compromised
-- Remove it from history using `git filter-repo --path <file> --invert-paths` or BFG Repo Cleaner
-- Force-push to all remotes after purging (requires team coordination)
 - Revoke and re-issue the credential with the relevant service
+- Purging it from history is a separate, optional step, and the user's decision. It means
+  `git filter-repo --path <file> --invert-paths` (or BFG Repo Cleaner) and then a force push
+  to every remote, which rewrites history for everyone who has cloned the repo. Explain
+  that, say that rotation already makes the leaked value useless, and wait for an explicit
+  yes before running either command. Never run them as part of the scan.
 
 **If the secret is in a file that should be gitignored:**
 

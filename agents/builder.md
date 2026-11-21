@@ -1,6 +1,6 @@
 ---
 name: builder
-description: Use this agent to build exactly one task from an approved plan, test first. It writes the failing test, makes it pass, runs the local quality gate and commits once for the task. It never pushes to the default branch. Use it for each task in a plan, one dispatch per task, or when the user says "build task N" or "implement this step".
+description: Use this agent to build exactly one task from an approved plan, test first. It writes the failing test, makes it pass, runs the local quality gate and commits once for the task. It never pushes to the default branch. Use it when a workflow dispatches it for a plan task, one dispatch per task, or when the user says "build task N" or "implement this step".
 model: inherit
 color: blue
 tools: Read, Write, Edit, Bash, Grep, Glob, Skill

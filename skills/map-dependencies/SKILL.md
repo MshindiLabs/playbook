@@ -1,14 +1,13 @@
 ---
 name: map-dependencies
 description: >
-  Build a dependency map for a module, file, or package showing all inbound
-  and outbound imports, flagging circular references, tight coupling, god-
-  modules, and orphaned code. Use when the user asks "what depends on this
-  file", "can I delete this safely", "what breaks if I change X", "what
-  imports this module", or wants the blast radius of a change before making
-  it. Not a runtime execution trace — use explain-flow instead when the user
-  wants to know how a request flows through the system rather than which files
-  import which.
+  Build a static dependency map for a module, file, or package showing all inbound and
+  outbound imports, flagging circular references, tight coupling, god-modules, and
+  orphaned code. It reads the import graph and runs nothing. Use when the user asks
+  "what depends on this file", "can I delete this safely", or "what imports this
+  module". To prove a change is safe by running code, use blast-radius. Not a runtime
+  execution trace — use explain-flow when the user wants to know how a request flows
+  through the system rather than which files import which.
 ---
 
 # map-dependencies

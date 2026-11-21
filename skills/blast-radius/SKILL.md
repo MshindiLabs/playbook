@@ -1,7 +1,11 @@
 ---
 name: blast-radius
 description: >
-  Find what a change could break somewhere else before it ships, beyond the diff, and prove the one fact it is safe because of by running real code instead of writing it up. Trigger on "blast radius of X", "what could this break", "what else does this touch", or when reviewing a small diff you do not trust.
+  Find what a change could break somewhere else before it ships, beyond the diff, and
+  prove the one fact it is safe because of by running real code instead of writing it
+  up. Trigger on "blast radius of X", "what could this break", "what else does this
+  touch", or when reviewing a small diff you do not trust. For a static map of what
+  imports what, use the `map-dependencies` skill.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/blast-radius

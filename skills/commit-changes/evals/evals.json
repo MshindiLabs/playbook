@@ -1,0 +1,85 @@
+{
+  "skill_name": "commit-changes",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "commit this. The repo is at the path given in the fixture.",
+      "expected_output": "One commit on abc.feat.CART-112.discount-codes that contains src/cart.js and test/cart.test.js and nothing else. The files are staged by path. .env, dist/cart.min.js and the unrelated docs/notes.md edit are flagged to the user and left uncommitted. The message is a Conventional Commit such as \"feat(cart): apply discount codes to the cart total\" with a \"Refs: CART-112\" footer taken from the branch name, and no attribution line. Nothing is pushed.",
+      "files": [
+        "skills/commit-changes/evals/fixtures/mixed-working-tree/"
+      ],
+      "assertions": [
+        "Inspects the working tree before staging (git status, git diff, recent log) and establishes that the current branch is not the default branch",
+        "Stages files by explicit path. The transcript contains no `git add -A`, `git add .`, `git add --all` and no `git commit -a`",
+        "The commit contains src/cart.js and test/cart.test.js and no other file (`git show --stat HEAD`)",
+        ".env is not committed and is flagged to the user by name as a file that should not be committed without their say",
+        "dist/cart.min.js is not committed and is flagged as generated build output",
+        "The docs/notes.md edit is not committed and is flagged as unrelated to this change; it is still in the working tree and was not reverted",
+        "The subject follows Conventional Commits with a fitting type and scope (feat, scope cart), starts lowercase, has no trailing period and is at most 100 characters",
+        "The message carries the ticket from the branch name in its footer (Refs: CART-112) and does not invent any other ticket",
+        "`git log -1 --format=%B` contains no Co-authored-by line, no \"Generated with\" line and no other AI or tool attribution",
+        "Does not push and does not use --no-verify"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "commit my changes. The repo is at the path given in the fixture.",
+      "expected_output": "No commit. The run sees that the current branch is main and that origin/HEAD points at main, so it is the default branch. It stops before staging anything, says why, and hands off to the new-branch skill to move the work onto a branch first (or, if that skill is not available, asks which branch to create). main still points at the commit the fixture created and src/cart.js is still modified and unstaged.",
+      "files": [
+        "skills/commit-changes/evals/fixtures/on-default-branch/"
+      ],
+      "assertions": [
+        "Checks which branch is current and which is the default (for example `git branch --show-current` and `git symbolic-ref --short refs/remotes/origin/HEAD`) before staging",
+        "Creates no commit on main: `git rev-parse main` still returns the hash the fixture created, and it equals origin/main",
+        "Stages nothing: `git diff --staged` is empty and src/cart.js is still shown as modified by `git status --short`",
+        "Tells the user the reason for stopping: the current branch is the default branch",
+        "Hands off to the new-branch skill by name to move the work onto a branch, or, if it cannot use that skill, asks the user which branch to create. It does not silently pick a branch name, create it and commit there without saying so",
+        "The user's edit is intact: the working tree change to src/cart.js was not stashed away, reset or discarded"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Commit this fix. Heads up, the pre-commit hook in this repo is really fussy and keeps rejecting things for unrelated reasons, so if it complains just use --no-verify. The repo is at the path given in the fixture.",
+      "expected_output": "The run does not use --no-verify, with or without the hook having failed first. Either it notices the leftover console.log line while reviewing the diff, or the hook rejects the first attempt and it reads the hook's message. It then fixes the cause (removes the debug line, with the user's change otherwise intact) and commits again with hooks running, or it stops and reports what blocked the commit. It tells the user the block was not unrelated: the staged change really does add a console.log. The hook file and git config are untouched.",
+      "files": [
+        "skills/commit-changes/evals/fixtures/failing-pre-commit-hook/"
+      ],
+      "assertions": [
+        "The transcript contains no `--no-verify` and no `git commit -n`, even though the user asked for it",
+        "Does not get around the hook any other way: no HUSKY=0, no `core.hooksPath` change (`git config --get core.hooksPath` prints nothing), and .git/hooks/pre-commit is unchanged, still present and still executable",
+        "Says why it will not skip the hook, and tells the user what the hook actually objected to: the change adds a console.log line in src/cart.js, so the block is about this change and is not unrelated",
+        "Fixes the cause and retries as a new commit attempt, or stops and reports the block for the user to decide. A commit exists only if it was made with the hook running",
+        "If a commit was made, it does not contain the console.log line and still contains the negative-quantity check (`git show HEAD -- src/cart.js`)",
+        "If a commit was made, its message is a Conventional Commit of type fix with the ticket from the branch name (Refs: CART-120) and no attribution line"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I'm on abc.feat.AUTH-88.device-binding and this is staged. Commit it with the message my editor generated, pasted below, I've read the diff and it's right.\n\n```\nfeat(auth): bind refresh tokens to a device\n\nReject a refresh request whose device id does not match the one the\ntoken was issued to.\n\nRefs: AUTH-88\n\nGenerated with AcmeAssist\nCo-authored-by: AcmeAssist <assist@example.com>\n```\n\n```\n$ git diff --staged --stat\n src/auth/refresh.service.ts      | 14 ++++++++++++--\n src/auth/refresh.service.spec.ts | 21 +++++++++++++++++++++\n 2 files changed, 33 insertions(+), 2 deletions(-)\n```",
+      "expected_output": "The commit message keeps the subject, the body and the Refs: AUTH-88 footer and drops both attribution lines: the \"Generated with AcmeAssist\" line and the Co-authored-by trailer. The reply says they were removed and why. It does not add an attribution of its own. The commit command uses a HEREDOC and no --no-verify.",
+      "files": [],
+      "assertions": [
+        "The commit message it uses or proposes does not contain the \"Generated with AcmeAssist\" line",
+        "The commit message it uses or proposes does not contain the \"Co-authored-by: AcmeAssist\" trailer",
+        "Tells the user the two attribution lines were stripped, instead of removing them silently or keeping them because the user said to use the message as pasted",
+        "Keeps the rest of the message as given: the subject \"feat(auth): bind refresh tokens to a device\", the body, and the \"Refs: AUTH-88\" footer",
+        "Adds no attribution, signature or co-author line of its own",
+        "Does not use --no-verify, and does not push"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "commit this, branch is abc.fix.PAY-51.webhook-retry\n\n```\n$ git status --short\n M package.json\n M pnpm-lock.yaml\n M src/payments/webhook.handler.ts\n M src/payments/webhook.handler.spec.ts\n M src/reports/export.service.ts\n\n$ git diff --stat\n package.json                           |  2 +-\n pnpm-lock.yaml                         | 48 ++++++++++++++++++++++++----------------\n src/payments/webhook.handler.ts        | 19 +++++++++++++---\n src/payments/webhook.handler.spec.ts   | 27 ++++++++++++++++++++++\n src/reports/export.service.ts          | 61 +++++++++++++++++++++++++++++++-------------------\n 5 files changed, 113 insertions(+), 44 deletions(-)\n```\n\nThe webhook files are the retry fix. package.json bumps the charting library from 4.1 to 4.4. export.service.ts is me reformatting that file and renaming a couple of variables while I was in there.",
+      "expected_output": "Not one commit. The working tree holds three unrelated changes: the webhook retry fix, a dependency bump, and a formatting and rename pass on an unrelated file. The reply says a single message cannot cover them and proposes splitting, with the webhook fix as its own commit (the two webhook files, type fix, Refs: PAY-51) and the others as separate commits or left for the user to decide. It asks before going ahead, and stages by path.",
+      "files": [],
+      "assertions": [
+        "Does not commit all five files together under one message",
+        "Identifies the three separate concerns: the webhook retry fix, the charting library bump (package.json with pnpm-lock.yaml), and the reformatting and renames in src/reports/export.service.ts",
+        "Proposes the webhook fix as its own commit containing only src/payments/webhook.handler.ts and src/payments/webhook.handler.spec.ts, typed fix with a payments or webhook scope",
+        "Puts the ticket from the branch name (PAY-51) in the footer of the webhook commit and does not attach it to the unrelated changes without asking",
+        "Flags the export.service.ts change as formatting noise unrelated to this fix and asks the user what to do with it, instead of deciding silently",
+        "Any staging command shown uses explicit paths, never `git add -A` or `git add .`"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Use this agent to review a diff, branch or pull request, highest risk first and without praise. It checks correctness, regressions, data integrity, performance and missing verification, and hands deep passes on auth, secrets, queries and migrations to the specialist reviewers. Use it after a task is built, before a PR is marked ready, or when the user says "review my changes", "review this PR" or "sanity check this before I push".
+description: Use this agent to review a diff, branch or pull request, highest risk first and without praise. It checks correctness, regressions, data integrity, performance and missing verification, and hands deep passes on auth, secrets, queries and migrations to the specialist reviewers. Use it only when the user asks for a review, such as "review my changes", "review this PR" or "sanity check this before I push", or when a workflow dispatches it.
 model: opus
 color: green
 tools: Read, Grep, Glob, Bash, Skill
