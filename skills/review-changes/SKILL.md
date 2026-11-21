@@ -8,8 +8,8 @@ description: >
   "sanity check this before I push". This is the generalist reviewer: it
   flags auth, migration, and query issues it notices but does not go deep.
   For dedicated depth, use review-auth for authentication and authorization,
-  review-migration for schema changes, and check-query-safety for database
-  queries.
+  review-migration for schema changes, check-query-safety for database
+  queries, and review-api for endpoint and list shape.
 ---
 
 # review-changes
@@ -101,6 +101,7 @@ review — do not attempt the exhaustive audit yourself:
 | auth, permissions, sessions, tokens          | `review-auth`             |
 | schema migrations                            | `review-migration`        |
 | database queries                             | `check-query-safety`      |
+| endpoints, routes, list envelopes, DTOs      | `review-api`              |
 | credentials or secrets appearing in the diff | `audit-secrets`           |
 
 The handoff is part of the finding, not a substitute for it. "Auth changed, get it
