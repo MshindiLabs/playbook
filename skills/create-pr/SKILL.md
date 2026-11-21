@@ -21,8 +21,8 @@ Determine `TARGET_BRANCH`:
   to the repository's main branch — detect it rather than assuming the name:
 
 ```bash
-git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' \
-  || echo main
+base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+echo "${base:-main}"
 ```
 
 - Only ask when the repo has several plausible integration branches (for example both
