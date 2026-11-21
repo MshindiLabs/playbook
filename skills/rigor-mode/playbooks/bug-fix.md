@@ -1,6 +1,6 @@
 ### Bug fix
 
-**You own this task. Plan, review, verify.** Delegate investigation and the fix to subagents, stay in the lead. Delegate to a subagent if your agent has them, with this brief. Without subagents, do the step yourself as a separate pass. Brief each one per the Delegation section of [the skill file](../SKILL.md).
+**You own this task. Plan, review, verify.** Delegate investigation and the fix to subagents, stay in the lead. Delegate to a subagent if your agent has them, with the scope each step below gives. Without subagents, do the step yourself as a separate pass. Brief each one per the Delegation section of [the skill file](../SKILL.md).
 
 Be scientific. Every shipped line traces to runtime evidence. Belt-and-suspenders that "might help" is a hypothesis, not a fix. It does not ship. When evidence refutes a hypothesis, revert what it motivated. The smallest change the evidence justifies ships, nothing more.
 

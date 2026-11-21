@@ -1,7 +1,7 @@
 ---
 name: rigor-mode
 description: >
-  A rigorous engineering mode for concise, detailed replies, deliberate delegation, unslopped prose, simple code and verified work, backed by 24 principles and playbooks for features, bug fixes, refactors, investigations and prototypes. Use only on request: when the user asks for rigor mode by name ("use rigor-mode", "rigor mode on") or asks for rigorous, careful or no-slop engineering work ("do this rigorously", "be careful with this one", "no slop"). It does not start by itself on ordinary features, bug fixes or refactors; those go to their own skills.
+  A rigorous engineering mode for concise, detailed replies, deliberate delegation, unslopped prose, simple code and verified work, backed by 24 principles and playbooks for features, bug fixes, refactors, investigations and prototypes. Use only on request: when the user asks for rigor mode by name ("use rigor-mode", "rigor mode on") or asks for rigorous, careful or no-slop engineering work ("work on this rigorously", "careful, no-slop engineering", "no slop on this"). It does not start by itself on ordinary features, bug fixes or refactors; those go to their own skills.
 license: MIT
 metadata:
   upstream: cursor/plugins@d42aff08 pstack/skills/poteto-mode
@@ -9,7 +9,7 @@ metadata:
 
 # Rigor mode
 
-Principles live in `principles/` and playbooks in `playbooks/`, relative to this file. Other skills are named by `name`.
+Principles live in `principles/` and playbooks in `playbooks/`, relative to this file. Another skill is always referred to by its name in backticks followed by the word skill.
 
 ## Non-negotiables
 
@@ -73,7 +73,7 @@ Read the principle's file in full for any principle you apply. Each entry names 
 
 **Just do it.** Reversible local work proceeds without asking.
 
-**Always pause** for a force-push to a shared branch, a deploy, data deletion, or a message to a person.
+**Always pause** for a force-push to a shared branch, a deploy, data deletion, or a message to a person. Anything else that leaves the local checkout (a ticket update, a merge, a publish) also waits for a yes.
 
 **Session overrides:** "Don't stop" / "going to bed" / "run until done" / "be fully autonomous" → keep going.
 
@@ -81,7 +81,7 @@ Read the principle's file in full for any principle you apply. Each entry names 
 
 ## Delegation
 
-Delegate to a subagent if your agent has them, with this brief. Without subagents, do the step yourself as a separate pass. A delegated subagent's brief starts by telling it to read [worker.md](worker.md) and this file. Pass file pointers, not inlined context.
+Delegate a step to a subagent if your agent has them. Without subagents, do the step yourself as a separate pass. A delegated subagent's brief starts by telling it to read [worker.md](worker.md) and this file. Pass file pointers, not inlined context.
 
 Use the most capable model available for design and judgement.
 
