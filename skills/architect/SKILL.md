@@ -1,0 +1,12 @@
+---
+name: architect
+description: >
+  Sketch types, signatures, and module structure before code, then stay in the loop while implementation fills in. Use on request ("architect this", "design this before coding") or as a step of a rigor workflow, for non-trivial work where jumping to code would lock in the wrong shape.
+license: MIT
+metadata:
+  upstream: cursor/plugins@d42aff08 pstack/skills/architect
+---
+
+# Architect
+
+Before writing code, trace every system the change touches, then sketch two different shapes for it (types, signatures, module boundaries) and pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. Redesign instead of patching if workarounds repeat.
